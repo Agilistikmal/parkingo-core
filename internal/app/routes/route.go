@@ -9,19 +9,25 @@ import (
 type Route struct {
 	FiberApp       *fiber.App
 	AuthMiddleware *middlewares.AuthMiddleware
+	AuthController *controllers.AuthController
 	UserController *controllers.UserController
 }
 
-func NewRoute(fiberApp *fiber.App, authMiddleware *middlewares.AuthMiddleware, userController *controllers.UserController) *Route {
+func NewRoute(fiberApp *fiber.App, authMiddleware *middlewares.AuthMiddleware, authController *controllers.AuthController, userController *controllers.UserController) *Route {
 	return &Route{
 		FiberApp:       fiberApp,
 		AuthMiddleware: authMiddleware,
+		AuthController: authController,
 		UserController: userController,
 	}
 }
 
 func (r *Route) RegisterRoutes() {
 	v1 := r.FiberApp.Group("/v1")
+
+	authRoutes := v1.Group("/authenticate")
+	authRoutes.Get("/", r.AuthController.Authenticate)
+	authRoutes.Get("/callback", r.AuthController.AuthenticateCallback)
 
 	userRoutes := v1.Group("/users")
 	userRoutes.Get("/me", r.AuthMiddleware.VerifyAuthencitated, r.UserController.GetCurrentUser)

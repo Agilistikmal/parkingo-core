@@ -25,7 +25,9 @@ func InjectRoutes() *routes.Route {
 	validate := validation.New()
 	userService := services.NewUserService(db, validate)
 	authMiddleware := middlewares.NewAuthMiddleware(jwtService, userService)
+	authService := services.NewAuthService(jwtService)
+	authController := controllers.NewAuthController(jwtService, authService, userService)
 	userController := controllers.NewUserController(userService)
-	route := routes.NewRoute(app, authMiddleware, userController)
+	route := routes.NewRoute(app, authMiddleware, authController, userController)
 	return route
 }
