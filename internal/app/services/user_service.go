@@ -48,6 +48,16 @@ func (s *UserService) GetUserByEmail(email string) (*models.User, error) {
 	return user, nil
 }
 
+func (s *UserService) GetUserByUsername(username string) (*models.User, error) {
+	var user *models.User
+	err := s.DB.Where("username = ?", username).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func (s *UserService) CreateUser(req *models.CreateUserRequest) (*models.User, error) {
 	err := s.Validate.Struct(req)
 	if err != nil {
@@ -81,8 +91,16 @@ func (s *UserService) UpdateUser(id int, req *models.UpdateUserRequest) (*models
 		return nil, err
 	}
 
-	user.FullName = req.FullName
-	user.Username = req.Username
+	if req.FullName != "" {
+		user.FullName = req.FullName
+	}
+	if req.Username != "" {
+		duplicateUser, err := s.GetUserByUsername(req.Username)
+		if err == nil && duplicateUser.ID != id {
+			return nil, gorm.ErrDuplicatedKey
+		}
+		user.Username = req.Username
+	}
 
 	err = s.DB.Save(&user).Error
 	if err != nil {

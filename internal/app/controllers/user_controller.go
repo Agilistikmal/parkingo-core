@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/agilistikmal/parkingo-core/internal/app/models"
+	"github.com/agilistikmal/parkingo-core/internal/app/pkg"
 	"github.com/agilistikmal/parkingo-core/internal/app/services"
 	"github.com/gofiber/fiber/v2"
 )
@@ -20,6 +21,41 @@ func (c *UserController) GetCurrentUser(ctx *fiber.Ctx) error {
 	authUser := ctx.Locals("user").(*models.User)
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"data": authUser,
+	})
+}
+
+func (c *UserController) UpdateCurrentUser(ctx *fiber.Ctx) error {
+	authUser := ctx.Locals("user").(*models.User)
+
+	var req models.UpdateUserRequest
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+		})
+	}
+
+	user, err := c.UserService.UpdateUser(authUser.ID, &req)
+	if err != nil {
+		return pkg.HandlerError(ctx, err)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": user,
+	})
+}
+
+func (c *UserController) DeleteCurrentUser(ctx *fiber.Ctx) error {
+	authUser := ctx.Locals("user").(*models.User)
+
+	err := c.UserService.DeleteUser(authUser.ID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete user",
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "User deleted successfully",
 	})
 }
 
@@ -118,5 +154,7 @@ func (c *UserController) DeleteUser(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(nil)
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "User deleted successfully",
+	})
 }

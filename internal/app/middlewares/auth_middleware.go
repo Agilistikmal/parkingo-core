@@ -19,12 +19,20 @@ func NewAuthMiddleware(jwtService *services.JWTService, userService *services.Us
 }
 
 func (m *AuthMiddleware) VerifyAuthencitated(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-	if token == "" {
+	bearerToken := c.Get("Authorization")
+	if bearerToken == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"message": "Missing authorization token",
 		})
 	}
+
+	if len(bearerToken) < 7 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Invalid authorization token",
+		})
+	}
+
+	token := bearerToken[7:]
 
 	userID, err := m.JWTService.GetUserIDFromToken(token)
 	if err != nil {

@@ -56,7 +56,11 @@ func (c *AuthController) AuthenticateCallback(ctx *fiber.Ctx) error {
 
 	user, err := c.UserService.GetUserByEmail(userInfo["email"].(string))
 	if err != nil {
-		username := strings.Split(userInfo["email"].(string), "@")[0] + "-" + pkg.RandomString(4)
+		username := strings.Split(userInfo["email"].(string), "@")[0]
+		user, err = c.UserService.GetUserByUsername(username)
+		if user != nil {
+			username += "-" + pkg.RandomString(4)
+		}
 		user, err = c.UserService.CreateUser(&models.CreateUserRequest{
 			Email:    userInfo["email"].(string),
 			FullName: userInfo["name"].(string),
@@ -70,7 +74,7 @@ func (c *AuthController) AuthenticateCallback(ctx *fiber.Ctx) error {
 		}
 	}
 
-	tokenString, err := c.JWTService.GenerateToken(user.ID, time.Minute*15)
+	tokenString, err := c.JWTService.GenerateToken(user.ID, time.Hour*24)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to generate token",

@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Parking struct {
 	ID        int                      `json:"id"`
@@ -18,15 +22,15 @@ type Parking struct {
 }
 
 type ParkingSlot struct {
-	ID        int        `json:"id"`
-	ParkingID int        `json:"parking_id"`
-	Parking   Parking    `gorm:"foreignKey:parking_id;references:ID"`
-	Name      string     `json:"name"`
-	Status    string     `json:"status"`
-	Fee       float64    `json:"fee"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	DeletedAt *time.Time `json:"deleted_at"`
+	ID        int            `json:"id"`
+	ParkingID int            `json:"parking_id"`
+	Parking   Parking        `gorm:"foreignKey:parking_id;references:ID"`
+	Name      string         `json:"name"`
+	Status    string         `json:"status"`
+	Fee       float64        `json:"fee"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at"`
 }
 
 type CreateParkingRequest struct {
