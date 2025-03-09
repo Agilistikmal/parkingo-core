@@ -18,6 +18,16 @@ func NewUserService(db *gorm.DB, validate *validator.Validate) *UserService {
 	}
 }
 
+func (s *UserService) GetAllUsers() ([]models.User, error) {
+	var users []models.User
+	err := s.DB.Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (s *UserService) GetUserByID(id int) (*models.User, error) {
 	var user *models.User
 	err := s.DB.First(&user, id).Error
@@ -38,32 +48,48 @@ func (s *UserService) GetUserByEmail(email string) (*models.User, error) {
 	return user, nil
 }
 
-func (s *UserService) CreateUser(user *models.User) error {
-	err := s.Validate.Struct(user)
+func (s *UserService) CreateUser(req *models.CreateUserRequest) (*models.User, error) {
+	err := s.Validate.Struct(req)
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	user := models.User{
+		Email:    req.Email,
+		Username: req.Username,
+		FullName: req.FullName,
+		Role:     "USER",
+		GoogleID: req.GoogleID,
 	}
 
 	err = s.DB.Create(&user).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &user, nil
 }
 
-func (s *UserService) UpdateUser(id int, user *models.User) error {
-	err := s.Validate.Struct(user)
+func (s *UserService) UpdateUser(id int, req *models.UpdateUserRequest) (*models.User, error) {
+	err := s.Validate.Struct(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = s.DB.Where("id = ?", id).Updates(&user).Error
+	user, err := s.GetUserByID(id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	user.FullName = req.FullName
+	user.Username = req.Username
+
+	err = s.DB.Save(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (s *UserService) DeleteUser(id int) error {
