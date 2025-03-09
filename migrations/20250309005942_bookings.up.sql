@@ -9,6 +9,7 @@ CREATE TABLE bookings (
   end_at TIMESTAMP NOT NULL,
   total_hours INT NOT NULL,
   total_fee DECIMAL(10, 2) NOT NULL,
+  payment_reference VARCHAR(255) NOT NULL,
   status VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
