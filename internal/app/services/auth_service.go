@@ -34,8 +34,8 @@ func NewAuthService(jwtService *JWTService) *AuthService {
 	}
 }
 
-func (s *AuthService) GetGoogleAuthURL() string {
-	return s.GoogleConfig.AuthCodeURL("state")
+func (s *AuthService) GetGoogleAuthURL(state string) string {
+	return s.GoogleConfig.AuthCodeURL(state)
 }
 
 func (s *AuthService) GetGoogleToken(code string) (*oauth2.Token, error) {

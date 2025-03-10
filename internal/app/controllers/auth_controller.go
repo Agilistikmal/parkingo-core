@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -8,7 +10,6 @@ import (
 	"github.com/agilistikmal/parkingo-core/internal/app/pkg"
 	"github.com/agilistikmal/parkingo-core/internal/app/services"
 	"github.com/gofiber/fiber/v2"
-	"github.com/sirupsen/logrus"
 )
 
 type AuthController struct {
@@ -26,8 +27,20 @@ func NewAuthController(jwtService *services.JWTService, authService *services.Au
 }
 
 func (c *AuthController) Authenticate(ctx *fiber.Ctx) error {
-	googleAuthURL := c.AuthService.GetGoogleAuthURL()
-	return ctx.Redirect(googleAuthURL)
+	redirectUrl := ctx.Query("redirect_url")
+	if redirectUrl == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Missing redirect_url",
+		})
+	}
+
+	state := url.QueryEscape(redirectUrl)
+	googleAuthURL := c.AuthService.GetGoogleAuthURL(state)
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": fiber.Map{
+			"url": googleAuthURL,
+		},
+	})
 }
 
 func (c *AuthController) AuthenticateCallback(ctx *fiber.Ctx) error {
@@ -51,8 +64,6 @@ func (c *AuthController) AuthenticateCallback(ctx *fiber.Ctx) error {
 			"message": "Failed to get user info",
 		})
 	}
-
-	logrus.Info(userInfo)
 
 	user, err := c.UserService.GetUserByEmail(userInfo["email"].(string))
 	if err != nil {
@@ -81,9 +92,15 @@ func (c *AuthController) AuthenticateCallback(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": fiber.Map{
-			"token": tokenString,
-		},
-	})
+	state := ctx.Query("state")
+	unescapeState, err := url.QueryUnescape(state)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid redirect_url",
+		})
+	}
+
+	redirectUrl := fmt.Sprintf("%s?token=%s", unescapeState, tokenString)
+
+	return ctx.Redirect(redirectUrl, fiber.StatusFound)
 }
