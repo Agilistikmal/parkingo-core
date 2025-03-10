@@ -19,11 +19,16 @@ func InjectRoutes() *routes.Route {
 		fiberapp.NewFiberApp,
 		database.NewDatabase,
 		validation.New,
+
 		services.NewAuthService,
 		services.NewUserService,
 		services.NewJWTService,
+		services.NewParkingService,
+
 		controllers.NewAuthController,
 		controllers.NewUserController,
+		controllers.NewParkingController,
+
 		middlewares.NewAuthMiddleware,
 		routes.NewRoute,
 	)

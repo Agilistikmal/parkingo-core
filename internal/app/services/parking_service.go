@@ -18,6 +18,16 @@ func NewParkingService(db *gorm.DB, validate *validator.Validate) *ParkingServic
 	}
 }
 
+func (s *ParkingService) GetParkings() ([]models.Parking, error) {
+	var parkings []models.Parking
+	err := s.DB.Find(&parkings).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return parkings, nil
+}
+
 func (s *ParkingService) GetParkingByID(id int) (*models.Parking, error) {
 	var parking *models.Parking
 	err := s.DB.First(&parking, id).Error

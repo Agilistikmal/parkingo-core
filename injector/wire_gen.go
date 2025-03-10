@@ -28,6 +28,8 @@ func InjectRoutes() *routes.Route {
 	authService := services.NewAuthService(jwtService)
 	authController := controllers.NewAuthController(jwtService, authService, userService)
 	userController := controllers.NewUserController(userService)
-	route := routes.NewRoute(app, authMiddleware, authController, userController)
+	parkingService := services.NewParkingService(db, validate)
+	parkingController := controllers.NewParkingController(parkingService)
+	route := routes.NewRoute(app, authMiddleware, authController, userController, parkingController)
 	return route
 }
