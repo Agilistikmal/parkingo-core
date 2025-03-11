@@ -104,3 +104,31 @@ func (c *AuthController) AuthenticateCallback(ctx *fiber.Ctx) error {
 
 	return ctx.Redirect(redirectUrl, fiber.StatusFound)
 }
+
+func (c *AuthController) VerifyToken(ctx *fiber.Ctx) error {
+	bearerToken := ctx.Get("Authorization")
+	if bearerToken == "" {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Missing authorization token",
+		})
+	}
+
+	if len(bearerToken) < 7 {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Invalid authorization token",
+		})
+	}
+
+	token := bearerToken[7:]
+
+	_, err := c.JWTService.ValidateToken(token)
+	if err != nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Token is valid",
+	})
+}

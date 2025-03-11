@@ -140,6 +140,8 @@ func (s *ParkingService) CreateParkingSlot(req *models.CreateParkingSlotRequest)
 		Name:      req.Name,
 		Status:    req.Status,
 		Fee:       req.Fee,
+		Row:       req.Col,
+		Col:       req.Row,
 	}
 
 	err = s.DB.Create(&slot).Error
@@ -169,6 +171,12 @@ func (s *ParkingService) UpdateParkingSlot(id int, req *models.UpdateParkingSlot
 	}
 	if req.Fee != 0 {
 		slot.Fee = req.Fee
+	}
+	if req.Row != 0 {
+		slot.Row = req.Row
+	}
+	if req.Col != 0 {
+		slot.Col = req.Col
 	}
 
 	err = s.DB.Save(&slot).Error

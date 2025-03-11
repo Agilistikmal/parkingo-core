@@ -29,6 +29,8 @@ type ParkingSlot struct {
 	Name      string         `json:"name"`
 	Status    string         `json:"status"`
 	Fee       float64        `json:"fee"`
+	Row       int            `json:"row"`
+	Col       int            `json:"col"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at"`
@@ -55,10 +57,14 @@ type CreateParkingSlotRequest struct {
 	Name      string  `json:"name" validate:"required,min=1,max=8"`
 	Status    string  `json:"status" validate:"required,oneof=AVAILABLE BOOKED OCCUPIED"`
 	Fee       float64 `json:"fee" validate:"required,min=0"`
+	Row       int     `json:"row" validate:"required"`
+	Col       int     `json:"col" validate:"required"`
 }
 
 type UpdateParkingSlotRequest struct {
 	Name   string  `json:"name" validate:"omitempty,min=1,max=8"`
 	Status string  `json:"status" validate:"omitempty,oneof=AVAILABLE BOOKED OCCUPIED"`
 	Fee    float64 `json:"fee" validate:"omitempty,min=0"`
+	Row    int     `json:"row" validate:"omitempty"`
+	Col    int     `json:"col" validate:"omitempty"`
 }
