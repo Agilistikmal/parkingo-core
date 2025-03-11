@@ -9,8 +9,8 @@ func NewFiberApp() *fiber.App {
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "*",
-		AllowMethods:     "GET,POST,PATCH,DELETE,OPTIONS",
+		AllowOrigins:     "http://localhost:3000, https://parkingo-core.agil.zip",
+		AllowMethods:     "GET,POST,OPTIONS,PATCH,DELETE",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 		AllowCredentials: true,
 	}))
