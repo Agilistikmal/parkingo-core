@@ -12,15 +12,17 @@ type Route struct {
 	AuthController    *controllers.AuthController
 	UserController    *controllers.UserController
 	ParkingController *controllers.ParkingController
+	BookingController *controllers.BookingController
 }
 
-func NewRoute(fiberApp *fiber.App, authMiddleware *middlewares.AuthMiddleware, authController *controllers.AuthController, userController *controllers.UserController, parkingController *controllers.ParkingController) *Route {
+func NewRoute(fiberApp *fiber.App, authMiddleware *middlewares.AuthMiddleware, authController *controllers.AuthController, userController *controllers.UserController, parkingController *controllers.ParkingController, bookingController *controllers.BookingController) *Route {
 	return &Route{
 		FiberApp:          fiberApp,
 		AuthMiddleware:    authMiddleware,
 		AuthController:    authController,
 		UserController:    userController,
 		ParkingController: parkingController,
+		BookingController: bookingController,
 	}
 }
 
@@ -45,8 +47,15 @@ func (r *Route) RegisterRoutes() {
 
 	parkingRoutes := v1.Group("/parkings")
 	parkingRoutes.Get("/", r.ParkingController.GetParkings)
-	parkingRoutes.Get("/:id", r.ParkingController.GetParking)
+	parkingRoutes.Get("/:id", r.ParkingController.GetParkingByID)
 	parkingRoutes.Post("/", r.AuthMiddleware.VerifyAuthencitated, r.AuthMiddleware.VerifyAdminAccess, r.ParkingController.CreateParking)
 	parkingRoutes.Patch("/:id", r.AuthMiddleware.VerifyAuthencitated, r.AuthMiddleware.VerifyAdminAccess, r.ParkingController.UpdateParking)
 	parkingRoutes.Delete("/:id", r.AuthMiddleware.VerifyAuthencitated, r.AuthMiddleware.VerifyAdminAccess, r.ParkingController.DeleteParking)
+
+	bookingRoutes := v1.Group("/bookings")
+	bookingRoutes.Get("/", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.GetBookings)
+	bookingRoutes.Get("/:id", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.GetBookingByID)
+	bookingRoutes.Post("/", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.CreateBooking)
+	bookingRoutes.Patch("/:id", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.UpdateBooking)
+	bookingRoutes.Delete("/:id", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.DeleteBooking)
 }

@@ -7,106 +7,106 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type ParkingController struct {
+type BookingController struct {
+	BookingService *services.BookingService
 	ParkingService *services.ParkingService
+	UserService    *services.UserService
 }
 
-func NewParkingController(parkingService *services.ParkingService) *ParkingController {
-	return &ParkingController{
+func NewBookingController(bookingService *services.BookingService, parkingService *services.ParkingService, userService *services.UserService) *BookingController {
+	return &BookingController{
+		BookingService: bookingService,
 		ParkingService: parkingService,
+		UserService:    userService,
 	}
 }
 
-func (c *ParkingController) GetParkings(ctx *fiber.Ctx) error {
-	parkings, err := c.ParkingService.GetParkings()
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to get parkings",
-		})
-	}
-
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": parkings,
-	})
-}
-
-func (c *ParkingController) GetParkingByID(ctx *fiber.Ctx) error {
-	id, err := ctx.ParamsInt("id")
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid parking ID",
-		})
-	}
-
-	parking, err := c.ParkingService.GetParkingByID(id)
+func (c *BookingController) GetBookings(ctx *fiber.Ctx) error {
+	bookings, err := c.BookingService.GetBookings()
 	if err != nil {
 		return pkg.HandlerError(ctx, err)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": parking,
+		"data": bookings,
 	})
 }
 
-func (c *ParkingController) CreateParking(ctx *fiber.Ctx) error {
+func (c *BookingController) GetBookingByID(ctx *fiber.Ctx) error {
+	id, err := ctx.ParamsInt("id")
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid booking ID",
+		})
+	}
+
+	booking, err := c.BookingService.GetBookingByID(id)
+	if err != nil {
+		return pkg.HandlerError(ctx, err)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": booking,
+	})
+}
+
+func (c *BookingController) CreateBooking(ctx *fiber.Ctx) error {
 	authUser := ctx.Locals("user").(*models.User)
 
-	var req *models.CreateParkingRequest
+	var req *models.CreateBookingRequest
 	if err := ctx.BodyParser(&req); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Invalid request body",
 		})
 	}
 
-	parking, err := c.ParkingService.CreateParking(authUser.ID, req)
+	booking, err := c.BookingService.CreateBooking(authUser.ID, req)
 	if err != nil {
 		return pkg.HandlerError(ctx, err)
 	}
 
 	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"data": parking,
+		"data": booking,
 	})
 }
 
-func (c *ParkingController) UpdateParking(ctx *fiber.Ctx) error {
+func (c *BookingController) UpdateBooking(ctx *fiber.Ctx) error {
 	id, err := ctx.ParamsInt("id")
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid parking ID",
+			"message": "Invalid booking ID",
 		})
 	}
 
-	var req *models.UpdateParkingRequest
+	var req *models.UpdateBookingRequest
 	if err := ctx.BodyParser(&req); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Invalid request body",
 		})
 	}
 
-	parking, err := c.ParkingService.UpdateParking(id, req)
+	booking, err := c.BookingService.UpdateBooking(id, req)
 	if err != nil {
 		return pkg.HandlerError(ctx, err)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": parking,
+		"data": booking,
 	})
 }
 
-func (c *ParkingController) DeleteParking(ctx *fiber.Ctx) error {
+func (c *BookingController) DeleteBooking(ctx *fiber.Ctx) error {
 	id, err := ctx.ParamsInt("id")
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid parking ID",
+			"message": "Invalid booking ID",
 		})
 	}
 
-	err = c.ParkingService.DeleteParking(id)
+	err = c.BookingService.DeleteBooking(id)
 	if err != nil {
 		return pkg.HandlerError(ctx, err)
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Parking deleted successfully",
-	})
+	return ctx.Status(fiber.StatusNoContent).JSON(nil)
 }

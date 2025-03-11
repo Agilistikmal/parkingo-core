@@ -27,6 +27,16 @@ func NewBookingService(db *gorm.DB, validate *validator.Validate, xenditClient *
 	}
 }
 
+func (s *BookingService) GetBookings() ([]*models.Booking, error) {
+	var bookings []*models.Booking
+	err := s.DB.Find(&bookings).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return bookings, nil
+}
+
 func (s *BookingService) GetBookingByID(id int) (*models.Booking, error) {
 	var booking *models.Booking
 	err := s.DB.First(&booking, id).Error

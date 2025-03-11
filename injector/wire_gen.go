@@ -13,6 +13,7 @@ import (
 	"github.com/agilistikmal/parkingo-core/internal/app/services"
 	"github.com/agilistikmal/parkingo-core/internal/infrastructure/database"
 	"github.com/agilistikmal/parkingo-core/internal/infrastructure/fiberapp"
+	"github.com/agilistikmal/parkingo-core/internal/infrastructure/paymentgateway"
 	"github.com/agilistikmal/parkingo-core/internal/infrastructure/validation"
 )
 
@@ -30,6 +31,9 @@ func InjectRoutes() *routes.Route {
 	userController := controllers.NewUserController(userService)
 	parkingService := services.NewParkingService(db, validate)
 	parkingController := controllers.NewParkingController(parkingService)
-	route := routes.NewRoute(app, authMiddleware, authController, userController, parkingController)
+	apiClient := paymentgateway.NewXendit()
+	bookingService := services.NewBookingService(db, validate, apiClient)
+	bookingController := controllers.NewBookingController(bookingService, parkingService, userService)
+	route := routes.NewRoute(app, authMiddleware, authController, userController, parkingController, bookingController)
 	return route
 }
