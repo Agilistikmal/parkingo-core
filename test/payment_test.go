@@ -21,7 +21,7 @@ func TestPayment(t *testing.T) {
 	invoiceRequest.SetDescription("Testing Parking Fee KB 1234 AGL")
 	invoiceRequest.SetCurrency("IDR")
 
-	paymentInvoice, _, err := xdt.Client.InvoiceApi.CreateInvoice(context.Background()).
+	paymentInvoice, _, err := xdt.InvoiceApi.CreateInvoice(context.Background()).
 		CreateInvoiceRequest(invoiceRequest).
 		Execute()
 	if err != nil {

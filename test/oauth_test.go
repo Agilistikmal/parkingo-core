@@ -14,6 +14,6 @@ func TestOAuth(t *testing.T) {
 	jwtService := services.NewJWTService()
 	authService := services.NewAuthService(jwtService)
 
-	url := authService.GetGoogleAuthURL()
+	url := authService.GetGoogleAuthURL("agil.zip")
 	logrus.Info(url)
 }
