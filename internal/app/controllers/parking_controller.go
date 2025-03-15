@@ -48,6 +48,19 @@ func (c *ParkingController) GetParkingByID(ctx *fiber.Ctx) error {
 	})
 }
 
+func (c *ParkingController) GetParkingBySlug(ctx *fiber.Ctx) error {
+	slug := ctx.Params("slug")
+
+	parking, err := c.ParkingService.GetParkingBySlug(slug)
+	if err != nil {
+		return pkg.HandlerError(ctx, err)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": parking,
+	})
+}
+
 func (c *ParkingController) CreateParking(ctx *fiber.Ctx) error {
 	authUser := ctx.Locals("user").(*models.User)
 

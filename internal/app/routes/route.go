@@ -48,6 +48,7 @@ func (r *Route) RegisterRoutes() {
 	parkingRoutes := v1.Group("/parkings")
 	parkingRoutes.Get("/", r.ParkingController.GetParkings)
 	parkingRoutes.Get("/:id", r.ParkingController.GetParkingByID)
+	parkingRoutes.Get("/slug/:slug", r.ParkingController.GetParkingBySlug)
 	parkingRoutes.Post("/", r.AuthMiddleware.VerifyAuthencitated, r.AuthMiddleware.VerifyAdminAccess, r.ParkingController.CreateParking)
 	parkingRoutes.Patch("/:id", r.AuthMiddleware.VerifyAuthencitated, r.AuthMiddleware.VerifyAdminAccess, r.ParkingController.UpdateParking)
 	parkingRoutes.Delete("/:id", r.AuthMiddleware.VerifyAuthencitated, r.AuthMiddleware.VerifyAdminAccess, r.ParkingController.DeleteParking)

@@ -11,6 +11,7 @@ type Parking struct {
 	ID        int            `json:"id"`
 	AuthorID  int            `json:"author_id"`
 	Author    User           `gorm:"foreignKey:author_id;references:ID"`
+	Slug      string         `json:"slug"`
 	Name      string         `json:"name"`
 	Address   string         `json:"address"`
 	Latitude  float64        `json:"latitude"`
@@ -37,6 +38,7 @@ type ParkingSlot struct {
 }
 
 type CreateParkingRequest struct {
+	Slug      string         `json:"slug" validate:"required,min=3,max=255"`
 	Name      string         `json:"name" validate:"required,min=3,max=255"`
 	Address   string         `json:"address" validate:"required,min=3,max=255"`
 	Latitude  float64        `json:"latitude" validate:"required"`
@@ -45,6 +47,7 @@ type CreateParkingRequest struct {
 }
 
 type UpdateParkingRequest struct {
+	Slug      string         `json:"slug" validate:"omitempty,min=3,max=255"`
 	Name      string         `json:"name" validate:"omitempty,min=3,max=255"`
 	Address   string         `json:"address" validate:"omitempty,min=3,max=255"`
 	Latitude  float64        `json:"latitude" validate:"omitempty"`

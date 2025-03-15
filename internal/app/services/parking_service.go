@@ -38,6 +38,16 @@ func (s *ParkingService) GetParkingByID(id int) (*models.Parking, error) {
 	return parking, nil
 }
 
+func (s *ParkingService) GetParkingBySlug(slug string) (*models.Parking, error) {
+	var parking *models.Parking
+	err := s.DB.Where("slug = ?", slug).First(&parking).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return parking, nil
+}
+
 func (s *ParkingService) GetParkingSlotsByParkingID(parkingID int) ([]models.ParkingSlot, error) {
 	var slots []models.ParkingSlot
 	err := s.DB.Where("parking_id = ?", parkingID).Find(&slots).Error
