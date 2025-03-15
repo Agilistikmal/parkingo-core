@@ -20,7 +20,7 @@ func NewParkingService(db *gorm.DB, validate *validator.Validate) *ParkingServic
 
 func (s *ParkingService) GetParkings() ([]models.Parking, error) {
 	var parkings []models.Parking
-	err := s.DB.Find(&parkings).Error
+	err := s.DB.Preload("Author").Preload("Slots").Find(&parkings).Error
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (s *ParkingService) GetParkings() ([]models.Parking, error) {
 
 func (s *ParkingService) GetParkingByID(id int) (*models.Parking, error) {
 	var parking *models.Parking
-	err := s.DB.First(&parking, id).Error
+	err := s.DB.Preload("Author").Preload("Slots").First(&parking, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (s *ParkingService) GetParkingByID(id int) (*models.Parking, error) {
 
 func (s *ParkingService) GetParkingBySlug(slug string) (*models.Parking, error) {
 	var parking *models.Parking
-	err := s.DB.Where("slug = ?", slug).First(&parking).Error
+	err := s.DB.Preload("Author").Preload("Slots").Where("slug = ?", slug).First(&parking).Error
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (s *ParkingService) GetParkingBySlug(slug string) (*models.Parking, error) 
 
 func (s *ParkingService) GetParkingSlotsByParkingID(parkingID int) ([]models.ParkingSlot, error) {
 	var slots []models.ParkingSlot
-	err := s.DB.Where("parking_id = ?", parkingID).Find(&slots).Error
+	err := s.DB.Preload("Parking").Where("parking_id = ?", parkingID).Find(&slots).Error
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (s *ParkingService) GetParkingSlotsByParkingID(parkingID int) ([]models.Par
 
 func (s *ParkingService) GetParkingSlotByID(id int) (*models.ParkingSlot, error) {
 	var slot *models.ParkingSlot
-	err := s.DB.First(&slot, id).Error
+	err := s.DB.Preload("Parking").First(&slot, id).Error
 	if err != nil {
 		return nil, err
 	}
