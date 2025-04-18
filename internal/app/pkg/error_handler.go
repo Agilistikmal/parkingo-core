@@ -31,8 +31,8 @@ func HandlerError(ctx *fiber.Ctx, err error) error {
 	default:
 		// Handle other types of errors
 		// Return a generic error response
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
 		})
 	}
 }

@@ -95,47 +95,51 @@ func (s *ParkingService) CreateParking(authorID int, req *models.CreateParkingRe
 	}
 
 	parking := models.Parking{
-		AuthorID:  authorID,
-		Slug:      req.Slug,
-		Name:      req.Name,
-		Address:   req.Address,
-		Latitude:  req.Latitude,
-		Longitude: req.Longitude,
-		Layout:    req.Layout,
+		AuthorID:   authorID,
+		Slug:       req.Slug,
+		Name:       req.Name,
+		Address:    req.Address,
+		DefaultFee: req.DefaultFee,
+		Latitude:   req.Latitude,
+		Longitude:  req.Longitude,
+		Layout:     req.Layout,
 	}
 
-	err = s.DB.Create(&parking).Error
-	if err != nil {
-		return nil, err
-	}
+	err = s.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&parking).Error; err != nil {
+			return err
+		}
 
-	s.CreateParkingSlot(&models.CreateParkingSlotRequest{
-		ParkingID: parking.ID,
-		Name:      "Default Slot",
-		Status:    "AVAILABLE",
-		Row:       1,
-		Col:       1,
-	})
+		var parsedLayout [][]string
+		if err := json.Unmarshal(parking.Layout, &parsedLayout); err != nil {
+			return errors.New("invalid layout format")
+		}
 
-	var parsedLayout [][]string
-	err = json.Unmarshal(parking.Layout, &parsedLayout)
-	if err != nil {
-		return nil, errors.New("invalid layout format")
-	}
+		if len(parsedLayout) == 0 {
+			return errors.New("layout cannot be empty")
+		}
 
-	for rowIndex, row := range parsedLayout {
-		for colIndex, val := range row {
-			if val == "P" {
-				s.CreateParkingSlot(&models.CreateParkingSlotRequest{
-					ParkingID: parking.ID,
-					Name:      fmt.Sprintf("P%d%d", rowIndex, colIndex),
-					Status:    "AVAILABLE",
-					Row:       rowIndex,
-					Col:       colIndex,
-				})
+		for rowIndex, row := range parsedLayout {
+			for colIndex, val := range row {
+				if val == "P" {
+					parkingSlot := &models.ParkingSlot{
+						ParkingID: parking.ID,
+						Name:      fmt.Sprintf("P%d%d", rowIndex, colIndex),
+						Status:    "AVAILABLE",
+						Fee:       parking.DefaultFee,
+						Row:       rowIndex,
+						Col:       colIndex,
+					}
+					err := tx.Create(&parkingSlot).Error
+					if err != nil {
+						return err
+					}
+				}
 			}
 		}
-	}
+
+		return nil
+	})
 
 	return &parking, nil
 }

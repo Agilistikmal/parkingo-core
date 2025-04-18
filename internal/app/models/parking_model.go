@@ -10,7 +10,7 @@ import (
 type Parking struct {
 	ID         int            `json:"id"`
 	AuthorID   int            `json:"author_id"`
-	Author     User           `gorm:"foreignKey:author_id;references:ID"`
+	Author     *User          `gorm:"foreignKey:author_id;references:ID" json:"author,omitempty"`
 	Slug       string         `json:"slug"`
 	Name       string         `json:"name"`
 	Address    string         `json:"address"`
@@ -27,7 +27,7 @@ type Parking struct {
 type ParkingSlot struct {
 	ID        int            `json:"id"`
 	ParkingID int            `json:"parking_id"`
-	Parking   Parking        `gorm:"foreignKey:parking_id;references:ID"`
+	Parking   *Parking       `gorm:"foreignKey:parking_id;references:ID" json:"parking,omitempty"`
 	Name      string         `json:"name"`
 	Status    string         `json:"status"`
 	Fee       float64        `json:"fee"`
