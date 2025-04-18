@@ -59,6 +59,17 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 		return nil, err
 	}
 
+	// Check if the parking slot is available
+	var similarBookings []models.Booking
+	err = s.DB.Where("slot_id = ? AND (start_at BETWEEN ? AND ? OR end_at BETWEEN ? AND ?)", req.SlotID, req.StartAt, req.EndAt, req.StartAt, req.EndAt).Find(&similarBookings).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(similarBookings) > 0 {
+		return nil, fmt.Errorf("slot is already booked")
+	}
+
 	paymentReference := "PKGO-" + pkg.RandomString(8)
 	invoiceRequest := *invoice.NewCreateInvoiceRequest(paymentReference, req.TotalFee)
 	invoiceRequest.SetPayerEmail(user.Email)
