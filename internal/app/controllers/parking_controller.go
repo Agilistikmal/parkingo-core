@@ -30,6 +30,21 @@ func (c *ParkingController) GetParkings(ctx *fiber.Ctx) error {
 	})
 }
 
+func (c *ParkingController) GetMyParkings(ctx *fiber.Ctx) error {
+	authUser := ctx.Locals("user").(*models.User)
+
+	parkings, err := c.ParkingService.GetMyParkings(authUser.ID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to get parkings",
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": parkings,
+	})
+}
+
 func (c *ParkingController) GetParkingByID(ctx *fiber.Ctx) error {
 	id, err := ctx.ParamsInt("id")
 	if err != nil {

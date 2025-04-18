@@ -1,6 +1,10 @@
 package services
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+
 	"github.com/agilistikmal/parkingo-core/internal/app/models"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
@@ -21,6 +25,16 @@ func NewParkingService(db *gorm.DB, validate *validator.Validate) *ParkingServic
 func (s *ParkingService) GetParkings() ([]models.Parking, error) {
 	var parkings []models.Parking
 	err := s.DB.Preload("Author").Preload("Slots").Find(&parkings).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return parkings, nil
+}
+
+func (s *ParkingService) GetMyParkings(authorID int) ([]models.Parking, error) {
+	var parkings []models.Parking
+	err := s.DB.Preload("Author").Preload("Slots").Find(&parkings, "author_id = ?", authorID).Error
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +88,15 @@ func (s *ParkingService) CreateParking(authorID int, req *models.CreateParkingRe
 		return nil, err
 	}
 
+	var existingParking models.Parking
+	err = s.DB.First(&existingParking, "slug = ?", req.Slug).Error
+	if err == nil {
+		return nil, errors.New("slug already exists")
+	}
+
 	parking := models.Parking{
 		AuthorID:  authorID,
+		Slug:      req.Slug,
 		Name:      req.Name,
 		Address:   req.Address,
 		Latitude:  req.Latitude,
@@ -86,6 +107,34 @@ func (s *ParkingService) CreateParking(authorID int, req *models.CreateParkingRe
 	err = s.DB.Create(&parking).Error
 	if err != nil {
 		return nil, err
+	}
+
+	s.CreateParkingSlot(&models.CreateParkingSlotRequest{
+		ParkingID: parking.ID,
+		Name:      "Default Slot",
+		Status:    "AVAILABLE",
+		Row:       1,
+		Col:       1,
+	})
+
+	var parsedLayout [][]string
+	err = json.Unmarshal(parking.Layout, &parsedLayout)
+	if err != nil {
+		return nil, errors.New("invalid layout format")
+	}
+
+	for rowIndex, row := range parsedLayout {
+		for colIndex, val := range row {
+			if val == "P" {
+				s.CreateParkingSlot(&models.CreateParkingSlotRequest{
+					ParkingID: parking.ID,
+					Name:      fmt.Sprintf("P%d%d", rowIndex, colIndex),
+					Status:    "AVAILABLE",
+					Row:       rowIndex,
+					Col:       colIndex,
+				})
+			}
+		}
 	}
 
 	return &parking, nil
@@ -104,6 +153,14 @@ func (s *ParkingService) UpdateParking(id int, req *models.UpdateParkingRequest)
 
 	if req.Name != "" {
 		parking.Name = req.Name
+	}
+	if req.Slug != "" {
+		var existingParking models.Parking
+		err = s.DB.First(&existingParking, "slug = ?", req.Slug).Error
+		if err == nil {
+			return nil, errors.New("slug already exists")
+		}
+		parking.Slug = req.Slug
 	}
 	if req.Address != "" {
 		parking.Address = req.Address
@@ -143,6 +200,16 @@ func (s *ParkingService) CreateParkingSlot(req *models.CreateParkingSlotRequest)
 	err := s.Validate.Struct(req)
 	if err != nil {
 		return nil, err
+	}
+
+	if req.Fee == 0 {
+		var parking models.Parking
+		err = s.DB.First(&parking, req.ParkingID).Error
+		if err != nil {
+			return nil, err
+		}
+
+		req.Fee = parking.DefaultFee
 	}
 
 	slot := models.ParkingSlot{

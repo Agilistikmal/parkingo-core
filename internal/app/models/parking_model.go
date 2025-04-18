@@ -8,19 +8,20 @@ import (
 )
 
 type Parking struct {
-	ID        int            `json:"id"`
-	AuthorID  int            `json:"author_id"`
-	Author    User           `gorm:"foreignKey:author_id;references:ID"`
-	Slug      string         `json:"slug"`
-	Name      string         `json:"name"`
-	Address   string         `json:"address"`
-	Latitude  float64        `json:"latitude"`
-	Longitude float64        `json:"longitude"`
-	Layout    datatypes.JSON `json:"layout" gorm:"type:jsonb"`
-	Slots     []ParkingSlot  `json:"slots" gorm:"foreignKey:parking_id;references:ID"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt *time.Time     `json:"deleted_at"`
+	ID         int            `json:"id"`
+	AuthorID   int            `json:"author_id"`
+	Author     User           `gorm:"foreignKey:author_id;references:ID"`
+	Slug       string         `json:"slug"`
+	Name       string         `json:"name"`
+	Address    string         `json:"address"`
+	DefaultFee float64        `json:"default_fee"`
+	Latitude   float64        `json:"latitude"`
+	Longitude  float64        `json:"longitude"`
+	Layout     datatypes.JSON `json:"layout" gorm:"type:jsonb"`
+	Slots      []ParkingSlot  `json:"slots" gorm:"foreignKey:parking_id;references:ID"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	DeletedAt  *time.Time     `json:"deleted_at"`
 }
 
 type ParkingSlot struct {
@@ -38,21 +39,23 @@ type ParkingSlot struct {
 }
 
 type CreateParkingRequest struct {
-	Slug      string         `json:"slug" validate:"required,min=3,max=255"`
-	Name      string         `json:"name" validate:"required,min=3,max=255"`
-	Address   string         `json:"address" validate:"required,min=3,max=255"`
-	Latitude  float64        `json:"latitude" validate:"required"`
-	Longitude float64        `json:"longitude" validate:"required"`
-	Layout    datatypes.JSON `json:"layout" validate:"required"`
+	Slug       string         `json:"slug" validate:"required,min=3,max=255"`
+	Name       string         `json:"name" validate:"required,min=3,max=255"`
+	Address    string         `json:"address" validate:"required,min=3,max=255"`
+	DefaultFee float64        `json:"default_fee" validate:"required,min=0"`
+	Latitude   float64        `json:"latitude" validate:"required"`
+	Longitude  float64        `json:"longitude" validate:"required"`
+	Layout     datatypes.JSON `json:"layout" validate:"required"`
 }
 
 type UpdateParkingRequest struct {
-	Slug      string         `json:"slug" validate:"omitempty,min=3,max=255"`
-	Name      string         `json:"name" validate:"omitempty,min=3,max=255"`
-	Address   string         `json:"address" validate:"omitempty,min=3,max=255"`
-	Latitude  float64        `json:"latitude" validate:"omitempty"`
-	Longitude float64        `json:"longitude" validate:"omitempty"`
-	Layout    datatypes.JSON `json:"layout" validate:"omitempty"`
+	Slug       string         `json:"slug" validate:"omitempty,min=3,max=255"`
+	Name       string         `json:"name" validate:"omitempty,min=3,max=255"`
+	Address    string         `json:"address" validate:"omitempty,min=3,max=255"`
+	DefaultFee float64        `json:"default_fee" validate:"omitempty,min=0"`
+	Latitude   float64        `json:"latitude" validate:"omitempty"`
+	Longitude  float64        `json:"longitude" validate:"omitempty"`
+	Layout     datatypes.JSON `json:"layout" validate:"omitempty"`
 }
 
 type CreateParkingSlotRequest struct {
