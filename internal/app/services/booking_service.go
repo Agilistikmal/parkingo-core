@@ -47,6 +47,16 @@ func (s *BookingService) GetBookingByID(id int) (*models.Booking, error) {
 	return booking, nil
 }
 
+func (s *BookingService) GetBookingByReference(reference string) (*models.Booking, error) {
+	var booking *models.Booking
+	err := s.DB.Where("payment_reference = ?", reference).First(&booking).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return booking, nil
+}
+
 func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequest) (*models.Booking, error) {
 	err := s.Validate.Struct(req)
 	if err != nil {

@@ -50,6 +50,22 @@ func (c *BookingController) GetBookingByID(ctx *fiber.Ctx) error {
 	})
 }
 
+func (c *BookingController) GetBookingByReference(ctx *fiber.Ctx) error {
+	reference := ctx.Params("reference")
+	if reference == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid booking reference",
+		})
+	}
+	booking, err := c.BookingService.GetBookingByReference(reference)
+	if err != nil {
+		return pkg.HandlerError(ctx, err)
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": booking,
+	})
+}
+
 func (c *BookingController) CreateBooking(ctx *fiber.Ctx) error {
 	authUser := ctx.Locals("user").(*models.User)
 
