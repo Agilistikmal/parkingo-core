@@ -70,8 +70,22 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 		return nil, fmt.Errorf("slot is already booked")
 	}
 
+	// Check if the parking slot is available
+	var parkingSlot models.ParkingSlot
+	err = s.DB.First(&parkingSlot, req.SlotID).Error
+	if err != nil {
+		return nil, err
+	}
+
+	totalHours := int(req.EndAt.Sub(req.StartAt).Hours())
+	if totalHours <= 3 {
+		return nil, fmt.Errorf("minimum booking time is 3 hours")
+	}
+
+	totalFee := float64(totalHours) * parkingSlot.Fee
+
 	paymentReference := "PKGO-" + pkg.RandomString(8)
-	invoiceRequest := *invoice.NewCreateInvoiceRequest(paymentReference, req.TotalFee)
+	invoiceRequest := *invoice.NewCreateInvoiceRequest(paymentReference, totalFee)
 	invoiceRequest.SetPayerEmail(user.Email)
 	invoiceRequest.SetDescription(fmt.Sprintf("Parking fee for %s", req.PlateNumber))
 	invoiceRequest.SetCurrency("IDR")
@@ -91,11 +105,11 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 		PlateNumber:      req.PlateNumber,
 		StartAt:          req.StartAt,
 		EndAt:            req.EndAt,
-		TotalHours:       req.TotalHours,
-		TotalFee:         req.TotalFee,
 		PaymentReference: paymentInvoice.ExternalId,
 		PaymentLink:      paymentInvoice.InvoiceUrl,
-		Status:           req.Status,
+		Status:           "UNPAID",
+		TotalHours:       totalHours,
+		TotalFee:         totalFee,
 	}
 
 	err = s.DB.Create(&booking).Error

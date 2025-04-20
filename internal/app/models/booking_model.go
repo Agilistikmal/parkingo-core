@@ -33,9 +33,6 @@ type CreateBookingRequest struct {
 	PlateNumber string    `json:"plate_number" validate:"required,min=3,max=16"`
 	StartAt     time.Time `json:"start_at" validate:"required"`
 	EndAt       time.Time `json:"end_at" validate:"required"`
-	TotalHours  int       `json:"total_hours" validate:"required"`
-	TotalFee    float64   `json:"total_fee" validate:"required"`
-	Status      string    `json:"status" validate:"required,oneof=UNPAID PAID CANCELLED EXPIRED COMPLETED"`
 }
 
 type UpdateBookingRequest struct {
