@@ -39,7 +39,7 @@ func (s *BookingService) GetBookings() ([]*models.Booking, error) {
 
 func (s *BookingService) GetBookingByID(id int) (*models.Booking, error) {
 	var booking *models.Booking
-	err := s.DB.First(&booking, id).Error
+	err := s.DB.Preload("User").Preload("Parking").Preload("Slot").First(&booking, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (s *BookingService) GetBookingByID(id int) (*models.Booking, error) {
 
 func (s *BookingService) GetBookingByReference(reference string) (*models.Booking, error) {
 	var booking *models.Booking
-	err := s.DB.Where("payment_reference = ?", reference).First(&booking).Error
+	err := s.DB.Preload("User").Preload("Parking").Preload("Slot").Where("payment_reference = ?", reference).First(&booking).Error
 	if err != nil {
 		return nil, err
 	}
