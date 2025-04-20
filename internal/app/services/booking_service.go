@@ -78,7 +78,7 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 	}
 
 	totalHours := int(req.EndAt.Sub(req.StartAt).Hours())
-	if totalHours <= 3 {
+	if totalHours < 3 {
 		return nil, fmt.Errorf("minimum booking time is 3 hours")
 	}
 
@@ -93,7 +93,7 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 	paymentInvoice, _, err := s.XenditClient.InvoiceApi.CreateInvoice(context.Background()).
 		CreateInvoiceRequest(invoiceRequest).
 		Execute()
-	if err != nil {
+	if paymentInvoice.Id == nil {
 		logrus.Error(err)
 		return nil, err
 	}
