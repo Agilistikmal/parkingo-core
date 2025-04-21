@@ -58,6 +58,7 @@ func (r *Route) RegisterRoutes() {
 	bookingRoutes.Get("/:id", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.GetBookingByID)
 	bookingRoutes.Get("/reference/:reference", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.GetBookingByReference)
 	bookingRoutes.Post("/", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.CreateBooking)
+	bookingRoutes.Post("/callback/payment", r.BookingController.PaymentCallback)
 	bookingRoutes.Patch("/:id", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.UpdateBooking)
 	bookingRoutes.Delete("/:id", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.DeleteBooking)
 }

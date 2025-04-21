@@ -5,6 +5,7 @@ import (
 	"github.com/agilistikmal/parkingo-core/internal/app/pkg"
 	"github.com/agilistikmal/parkingo-core/internal/app/services"
 	"github.com/gofiber/fiber/v2"
+	"github.com/xendit/xendit-go/v6/invoice"
 )
 
 type BookingController struct {
@@ -125,4 +126,29 @@ func (c *BookingController) DeleteBooking(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusNoContent).JSON(nil)
+}
+
+func (c *BookingController) PaymentCallback(ctx *fiber.Ctx) error {
+	var req invoice.InvoiceCallback
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+		})
+	}
+
+	// Check if the booking exists
+	booking, err := c.BookingService.GetBookingByReference(req.ExternalId)
+	if err != nil {
+		return pkg.HandlerError(ctx, err)
+	}
+
+	// Update the booking in the database
+	booking, err = c.BookingService.UpdateBooking(booking.ID, &models.UpdateBookingRequest{
+		Status: req.Status,
+	})
+	if err != nil {
+		return pkg.HandlerError(ctx, err)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(nil)
 }
