@@ -9,9 +9,8 @@ func NewFiberApp() *fiber.App {
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "*",
-		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
-		AllowCredentials: true,
+		AllowOrigins: "*",
+		AllowMethods: "GET,POST,PUT,DELETE,PATCH,OPTIONS",
 	}))
 
 	return app
