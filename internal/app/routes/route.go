@@ -30,7 +30,7 @@ func NewRoute(fiberApp *fiber.App, authMiddleware *middlewares.AuthMiddleware, a
 func (r *Route) RegisterRoutes() {
 	v1 := r.FiberApp.Group("/v1")
 
-	v1.Use(cors.New(cors.Config{
+	v1 = v1.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowMethods: "GET,POST,PUT,DELETE,PATCH,OPTIONS",
 	}))
