@@ -4,6 +4,7 @@ import (
 	"github.com/agilistikmal/parkingo-core/internal/app/controllers"
 	"github.com/agilistikmal/parkingo-core/internal/app/middlewares"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 type Route struct {
@@ -28,6 +29,11 @@ func NewRoute(fiberApp *fiber.App, authMiddleware *middlewares.AuthMiddleware, a
 
 func (r *Route) RegisterRoutes() {
 	v1 := r.FiberApp.Group("/v1")
+
+	v1.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowMethods: "GET,POST,PUT,DELETE,PATCH,OPTIONS",
+	}))
 
 	authRoutes := v1.Group("/authenticate")
 	authRoutes.Get("/", r.AuthController.Authenticate)
