@@ -64,7 +64,7 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 		return nil, err
 	}
 
-	now := time.Now()
+	now := pkg.GetCurrentTime()
 	if req.StartAt.Before(now) {
 		return nil, fmt.Errorf("start time must be in the future")
 	}

@@ -3,6 +3,7 @@ package services
 import (
 	"time"
 
+	"github.com/agilistikmal/parkingo-core/internal/app/pkg"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/viper"
 )
@@ -21,7 +22,7 @@ func (s *JWTService) GenerateToken(userID int, duration time.Duration) (string, 
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["user_id"] = userID
-	claims["exp"] = time.Now().Add(duration).Unix()
+	claims["exp"] = pkg.GetCurrentTime().Add(duration).Unix()
 
 	return token.SignedString([]byte(s.secretKey))
 }
