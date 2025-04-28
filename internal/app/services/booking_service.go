@@ -162,6 +162,8 @@ func (s *BookingService) UpdateBooking(id int, req *models.UpdateBookingRequest)
 		return nil, err
 	}
 
+	parkingSlot := booking.Slot
+
 	if req.PlateNumber != "" {
 		booking.PlateNumber = req.PlateNumber
 	}
@@ -184,9 +186,37 @@ func (s *BookingService) UpdateBooking(id int, req *models.UpdateBookingRequest)
 
 	if req.Status != "" {
 		booking.Status = req.Status
+
+		if req.Status == "CANCELED" {
+			parkingSlot.Status = "AVAILABLE"
+		}
+		if req.Status == "EXPIRED" {
+			parkingSlot.Status = "AVAILABLE"
+		}
+		if req.Status == "COMPLETED" {
+			parkingSlot.Status = "AVAILABLE"
+		}
+		if req.Status == "UNPAID" {
+			parkingSlot.Status = "BOOKED"
+		}
+		if req.Status == "PAID" {
+			parkingSlot.Status = "OCCUPIED"
+		}
 	}
 
-	err = s.DB.Save(&booking).Error
+	err = s.DB.Transaction(func(tx *gorm.DB) error {
+		err = tx.Save(&booking).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Save(&parkingSlot).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
