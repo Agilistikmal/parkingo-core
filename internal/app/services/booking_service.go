@@ -105,6 +105,8 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 	invoiceRequest.SetPayerEmail(user.Email)
 	invoiceRequest.SetDescription(fmt.Sprintf("Parking fee for %s", req.PlateNumber))
 	invoiceRequest.SetCurrency("IDR")
+	invoiceRequest.SetSuccessRedirectUrl(fmt.Sprintf("https://parkingo.agil.zip/b/%s", paymentReference))
+	invoiceRequest.SetInvoiceDuration(fmt.Sprintf("%d", 10*time.Minute.Seconds()))
 
 	paymentInvoice, _, err := s.XenditClient.InvoiceApi.CreateInvoice(context.Background()).
 		CreateInvoiceRequest(invoiceRequest).
