@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -26,7 +27,7 @@ func HandlerError(ctx *fiber.Ctx, err error) error {
 		// Handle go-validator error
 		// Return a response with the validation errors
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": e.Error(),
+			"message": fmt.Sprintf("Validation error: %s", e.Error()),
 		})
 	default:
 		// Handle other types of errors
