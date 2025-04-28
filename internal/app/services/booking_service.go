@@ -130,7 +130,20 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 		TotalFee:         totalFee,
 	}
 
-	err = s.DB.Create(&booking).Error
+	err = s.DB.Transaction(func(tx *gorm.DB) error {
+		err = tx.Create(&booking).Error
+		if err != nil {
+			return err
+		}
+
+		parkingSlot.Status = "BOOKED"
+		err = tx.Save(&parkingSlot).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
