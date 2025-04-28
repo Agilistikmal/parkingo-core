@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/agilistikmal/parkingo-core/internal/app/models"
 	"github.com/agilistikmal/parkingo-core/internal/app/pkg"
@@ -63,6 +64,11 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 		return nil, err
 	}
 
+	now := time.Now()
+	if req.StartAt.Before(now) {
+		return nil, fmt.Errorf("start time must be in the future")
+	}
+
 	var user *models.User
 	err = s.DB.First(&user, userID).Error
 	if err != nil {
@@ -71,7 +77,7 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 
 	// Check if the parking slot is available
 	var similarBookings []models.Booking
-	err = s.DB.Where("slot_id = ? AND (start_at BETWEEN ? AND ? OR end_at BETWEEN ? AND ?)", req.SlotID, req.StartAt, req.EndAt, req.StartAt, req.EndAt).Find(&similarBookings).Error
+	err = s.DB.Where("slot_id = ? AND (start_at BETWEEN ? AND ? OR end_at BETWEEN ? AND ?) AND status NOT IN ('CANCELED', 'EXPIRED', 'COMPLETED')", req.SlotID, req.StartAt, req.EndAt, req.StartAt, req.EndAt).Find(&similarBookings).Error
 	if err != nil {
 		return nil, err
 	}

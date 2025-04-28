@@ -31,14 +31,14 @@ type CreateBookingRequest struct {
 	ParkingID   int       `json:"parking_id" validate:"required"`
 	SlotID      int       `json:"slot_id" validate:"required"`
 	PlateNumber string    `json:"plate_number" validate:"required,min=3,max=16"`
-	StartAt     time.Time `json:"start_at" validate:"required"`
-	EndAt       time.Time `json:"end_at" validate:"required"`
+	StartAt     time.Time `json:"start_at" validate:"required,datetime"`
+	EndAt       time.Time `json:"end_at" validate:"required,datetime"`
 }
 
 type UpdateBookingRequest struct {
 	PlateNumber string    `json:"plate_number" validate:"omitempty,min=3,max=16"`
-	StartAt     time.Time `json:"start_at" validate:"omitempty"`
-	EndAt       time.Time `json:"end_at" validate:"omitempty"`
+	StartAt     time.Time `json:"start_at" validate:"omitempty,datetime"`
+	EndAt       time.Time `json:"end_at" validate:"omitempty,datetime"`
 	TotalHours  int       `json:"total_hours" validate:"omitempty"`
 	TotalFee    float64   `json:"total_fee" validate:"omitempty"`
 	Status      string    `json:"status" validate:"omitempty,oneof=UNPAID PAID CANCELLED EXPIRED COMPLETED"`
