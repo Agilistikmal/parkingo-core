@@ -130,7 +130,7 @@ func (c *BookingController) DeleteBooking(ctx *fiber.Ctx) error {
 }
 
 func (c *BookingController) PaymentCallback(ctx *fiber.Ctx) error {
-	callbackToken := ctx.Get("x-callback-token")
+	callbackToken := ctx.Get("X-CALLBACK-TOKEN")
 	if callbackToken == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"message": "Unauthorized",

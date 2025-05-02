@@ -87,7 +87,7 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 
 	// Check if the parking slot is available
 	var parkingSlot models.ParkingSlot
-	err = s.DB.First(&parkingSlot, req.SlotID).Error
+	err = s.DB.Preload("Parking").First(&parkingSlot, req.SlotID).Error
 	if err != nil {
 		return nil, err
 	}
@@ -99,6 +99,20 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 
 	totalFee := float64(totalHours) * parkingSlot.Fee
 
+	customer := *invoice.NewCustomerObject()
+	customer.SetEmail(user.Email)
+	customer.SetGivenNames(user.FullName)
+	customer.SetId(string(user.ID))
+
+	items := []invoice.InvoiceItem{
+		{
+			Name:        fmt.Sprintf("%s | %s | %s", parkingSlot.Parking.Name, parkingSlot.Name, req.PlateNumber),
+			Price:       float32(parkingSlot.Fee),
+			Quantity:    float32(totalHours),
+			ReferenceId: &parkingSlot.Parking.Slug,
+		},
+	}
+
 	paymentReference := "PKGO-" + pkg.RandomString(8)
 	invoiceRequest := *invoice.NewCreateInvoiceRequest(paymentReference, totalFee)
 	invoiceRequest.SetPayerEmail(user.Email)
@@ -106,6 +120,8 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 	invoiceRequest.SetCurrency("IDR")
 	invoiceRequest.SetSuccessRedirectUrl(fmt.Sprintf("https://parkingo.agil.zip/b/%s", paymentReference))
 	invoiceRequest.SetInvoiceDuration("600")
+	invoiceRequest.SetCustomer(customer)
+	invoiceRequest.SetItems(items)
 
 	paymentInvoice, _, err := s.XenditClient.InvoiceApi.CreateInvoice(context.Background()).
 		CreateInvoiceRequest(invoiceRequest).
