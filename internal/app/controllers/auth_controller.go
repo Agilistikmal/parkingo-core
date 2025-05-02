@@ -73,16 +73,23 @@ func (c *AuthController) AuthenticateCallback(ctx *fiber.Ctx) error {
 			username += "-" + pkg.RandomString(4)
 		}
 		user, err = c.UserService.CreateUser(&models.CreateUserRequest{
-			Email:    userInfo["email"].(string),
-			FullName: userInfo["name"].(string),
-			Username: username,
-			GoogleID: userInfo["id"].(string),
+			Email:     userInfo["email"].(string),
+			FullName:  userInfo["name"].(string),
+			Username:  username,
+			AvatarURL: userInfo["picture"].(string),
+			GoogleID:  userInfo["id"].(string),
 		})
 		if err != nil {
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "Failed to create user",
 			})
 		}
+	}
+
+	if user.AvatarURL == "" {
+		_, _ = c.UserService.UpdateUser(user.ID, &models.UpdateUserRequest{
+			AvatarURL: userInfo["picture"].(string),
+		})
 	}
 
 	tokenString, err := c.JWTService.GenerateToken(user.ID, time.Hour*24)
