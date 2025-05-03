@@ -32,7 +32,8 @@ func InjectRoutes() *routes.Route {
 	parkingService := services.NewParkingService(db, validate)
 	parkingController := controllers.NewParkingController(parkingService)
 	apiClient := paymentgateway.NewXendit()
-	bookingService := services.NewBookingService(db, validate, apiClient)
+	mailService := services.NewMailService()
+	bookingService := services.NewBookingService(db, validate, apiClient, mailService)
 	bookingController := controllers.NewBookingController(bookingService, parkingService, userService)
 	route := routes.NewRoute(app, authMiddleware, authController, userController, parkingController, bookingController)
 	return route

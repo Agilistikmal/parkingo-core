@@ -22,6 +22,7 @@ func InjectRoutes() *routes.Route {
 		validation.New,
 		paymentgateway.NewXendit,
 
+		services.NewMailService,
 		services.NewAuthService,
 		services.NewUserService,
 		services.NewJWTService,

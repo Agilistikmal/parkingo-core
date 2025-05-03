@@ -17,13 +17,15 @@ type BookingService struct {
 	DB           *gorm.DB
 	Validate     *validator.Validate
 	XenditClient *xendit.APIClient
+	MailService  *MailService
 }
 
-func NewBookingService(db *gorm.DB, validate *validator.Validate, xenditClient *xendit.APIClient) *BookingService {
+func NewBookingService(db *gorm.DB, validate *validator.Validate, xenditClient *xendit.APIClient, mailService *MailService) *BookingService {
 	return &BookingService{
 		DB:           db,
 		Validate:     validate,
 		XenditClient: xenditClient,
+		MailService:  mailService,
 	}
 }
 
@@ -140,6 +142,7 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 		EndAt:            req.EndAt,
 		PaymentReference: paymentInvoice.ExternalId,
 		PaymentLink:      paymentInvoice.InvoiceUrl,
+		PaymentExpiredAt: paymentInvoice.ExpiryDate,
 		Status:           "UNPAID",
 		TotalHours:       totalHours,
 		TotalFee:         totalFee,
@@ -156,6 +159,9 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 		if err != nil {
 			return err
 		}
+
+		// Send email to user
+		go s.MailService.SendMail(user.Email, fmt.Sprintf("Booking Confirmation %s", booking.PaymentReference), fmt.Sprintf("Your booking is confirmed. Booking invoice and detail: https://parkingo.agil.zip/b/%s", booking.PaymentReference))
 
 		return nil
 	})

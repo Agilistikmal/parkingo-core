@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parkingo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body>
+    <div class="w-full max-w-screen-sm bg-slate-200 mx-auto p-8 pb-24">
+      <!-- Header -->
+      <div class="w-full rounded-3xl bg-black/80 p-5 text-white">
+        <img
+          src="https://parkingo.agil.zip/_ipx/_/assets/logo.png"
+          alt=""
+          class="h-8"
+        />
+      </div>
+
+      <!-- Content -->
+      <div class="w-full rounded-3xl bg-white p-5 mt-2 min-h-48">
+        <h1 class="text-2xl font-bold">{{ .Subject }}</h1>
+        <div>{{ .Content }}</div>
+      </div>
+
+      <hr class="border-t-[6px] border-dotted my-5 border-black/25" />
+
+      <!-- Footer -->
+      <div class="w-full">
+        <div class="flex items-center justify-center gap-4">
+          <a href="https://parkingo.agil.zip" target="_blank">
+            <img
+              src="https://parkingo.agil.zip/_ipx/_/assets/logo.png"
+              alt=""
+              class="h-8 bg-black/80 rounded-md p-2"
+            />
+          </a>
+          <p class="text-sm">&copy; 2025 Parkingo. All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

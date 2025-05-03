@@ -21,6 +21,7 @@ type Booking struct {
 	TotalFee         float64        `json:"total_fee"`
 	PaymentReference string         `json:"payment_reference"`
 	PaymentLink      string         `json:"payment_link"`
+	PaymentExpiredAt time.Time      `json:"payment_expired_at"`
 	Status           string         `json:"status"`
 	CreatedAt        time.Time      `json:"created_at"`
 	UpdatedAt        time.Time      `json:"updated_at"`
