@@ -10,6 +10,7 @@ import (
 	"github.com/agilistikmal/parkingo-core/internal/app/pkg"
 	"github.com/agilistikmal/parkingo-core/internal/app/services"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 )
 
 type AuthController struct {
@@ -87,9 +88,12 @@ func (c *AuthController) AuthenticateCallback(ctx *fiber.Ctx) error {
 	}
 
 	if user.AvatarURL == "" {
-		_, _ = c.UserService.UpdateUser(user.ID, &models.UpdateUserRequest{
+		_, err = c.UserService.UpdateUser(user.ID, &models.UpdateUserRequest{
 			AvatarURL: userInfo["picture"].(string),
 		})
+		if err != nil {
+			log.Warn("Failed to update user avatar URL: ", err)
+		}
 	}
 
 	tokenString, err := c.JWTService.GenerateToken(user.ID, time.Hour*24)

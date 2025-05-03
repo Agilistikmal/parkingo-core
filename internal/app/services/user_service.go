@@ -101,6 +101,9 @@ func (s *UserService) UpdateUser(id int, req *models.UpdateUserRequest) (*models
 		}
 		user.Username = req.Username
 	}
+	if req.AvatarURL != "" {
+		user.AvatarURL = req.AvatarURL
+	}
 
 	err = s.DB.Save(&user).Error
 	if err != nil {
