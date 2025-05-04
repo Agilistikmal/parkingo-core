@@ -10,7 +10,7 @@ import (
 	"github.com/agilistikmal/parkingo-core/internal/app/pkg"
 	"github.com/agilistikmal/parkingo-core/internal/app/services"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
+	"github.com/sirupsen/logrus"
 )
 
 type AuthController struct {
@@ -92,7 +92,7 @@ func (c *AuthController) AuthenticateCallback(ctx *fiber.Ctx) error {
 			AvatarURL: userInfo["picture"].(string),
 		})
 		if err != nil {
-			log.Warn("Failed to update user avatar URL: ", err)
+			logrus.Warn("Failed to update user avatar URL: ", err)
 		}
 	}
 

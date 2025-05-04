@@ -2,7 +2,6 @@ package services
 
 import (
 	"bytes"
-	"log"
 	"text/template"
 
 	"github.com/agilistikmal/parkingo-core/internal/app/templates"
@@ -48,7 +47,7 @@ func (s *MailService) SendMail(to string, subject string, content string) error 
 
 	var body bytes.Buffer
 	if err := s.Template.Execute(&body, data); err != nil {
-		log.Fatal("Gagal render template:", err)
+		logrus.Fatal("Gagal render template:", err)
 	}
 
 	m.SetBody("text/html", body.String())
