@@ -23,9 +23,10 @@ func NewS3Service() *S3Service {
 	token := viper.GetString("s3.token")
 
 	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKey, secretKey, token),
-		Secure: true,
-		Region: "auto",
+		Creds:        credentials.NewStaticV4(accessKey, secretKey, token),
+		Secure:       true,
+		Region:       "auto",
+		BucketLookup: minio.BucketLookupPath,
 	})
 	if err != nil {
 		logrus.Fatal("Failed to create S3 client: ", err)
