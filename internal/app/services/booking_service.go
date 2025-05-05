@@ -29,9 +29,26 @@ func NewBookingService(db *gorm.DB, validate *validator.Validate, xenditClient *
 	}
 }
 
-func (s *BookingService) GetBookings() ([]*models.Booking, error) {
+func (s *BookingService) GetBookings(filter *models.BookingFilter) ([]*models.Booking, error) {
 	var bookings []*models.Booking
-	err := s.DB.Find(&bookings).Error
+	if filter != nil {
+		err := s.DB.
+			Preload("Parking").Preload("Slot").Preload("User").
+			Where("user_id = ?", filter.UserID).
+			Or("parking_id = ?", filter.ParkingID).
+			Or("status = ?", filter.Status).
+			Limit(filter.Limit).
+			Offset((filter.Page - 1) * filter.Limit).
+			Order(fmt.Sprintf("%s %s", filter.SortBy, filter.SortOrder)).
+			Find(&bookings).
+			Error
+		if err != nil {
+			return nil, err
+		}
+		return bookings, nil
+	}
+
+	err := s.DB.Preload("Parking").Preload("Slot").Preload("User").Find(&bookings).Error
 	if err != nil {
 		return nil, err
 	}

@@ -44,3 +44,13 @@ type UpdateBookingRequest struct {
 	TotalFee    float64   `json:"total_fee" validate:"omitempty"`
 	Status      string    `json:"status" validate:"omitempty,oneof=UNPAID PAID CANCELLED EXPIRED COMPLETED"`
 }
+
+type BookingFilter struct {
+	UserID    int    `json:"user_id"`
+	ParkingID int    `json:"parking_id"`
+	Status    string `json:"status"`
+	Limit     int    `json:"limit"`
+	Page      int    `json:"page"`
+	SortBy    string `json:"sort_by"`
+	SortOrder string `json:"sort_order"`
+}

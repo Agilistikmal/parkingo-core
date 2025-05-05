@@ -24,7 +24,24 @@ func NewBookingController(bookingService *services.BookingService, parkingServic
 }
 
 func (c *BookingController) GetBookings(ctx *fiber.Ctx) error {
-	bookings, err := c.BookingService.GetBookings()
+	authUser := ctx.Locals("user").(*models.User)
+
+	filter := &models.BookingFilter{
+		UserID:    ctx.QueryInt("user_id", authUser.ID),
+		Page:      ctx.QueryInt("page", 1),
+		Limit:     ctx.QueryInt("limit", 10),
+		SortBy:    ctx.Query("sort_by", "created_at"),
+		SortOrder: ctx.Query("sort_order", "desc"),
+		ParkingID: ctx.QueryInt("parking_id", 0),
+	}
+
+	if filter.UserID != authUser.ID {
+		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": "You are not allowed to access this resource",
+		})
+	}
+
+	bookings, err := c.BookingService.GetBookings(filter)
 	if err != nil {
 		return pkg.HandlerError(ctx, err)
 	}
