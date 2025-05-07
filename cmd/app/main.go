@@ -15,7 +15,9 @@ func main() {
 
 	s3Service := services.NewS3Service()
 	mqttScanner := queues.NewScannerMQTT(s3Service)
+
 	go mqttScanner.Subscribe()
+	go routes.BookingJob.RunCheckBookingStatus()
 
 	routes.FiberApp.Listen(":3000")
 }

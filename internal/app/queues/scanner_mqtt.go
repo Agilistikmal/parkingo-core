@@ -27,7 +27,7 @@ func NewScannerMQTT(s3Service *services.S3Service) *ScannerMQTT {
 	}
 
 	opts.OnConnectionLost = func(c mqtt.Client, err error) {
-		logrus.Error("Connection lost: %v\n", err)
+		logrus.Errorf("Connection lost: %v\n", err)
 	}
 
 	client := mqtt.NewClient(opts)

@@ -31,24 +31,30 @@ func NewBookingService(db *gorm.DB, validate *validator.Validate, xenditClient *
 
 func (s *BookingService) GetBookings(filter *models.BookingFilter) ([]*models.Booking, error) {
 	var bookings []*models.Booking
+	query := s.DB.Preload("Parking").Preload("Slot").Preload("User")
+
 	if filter != nil {
-		err := s.DB.
-			Preload("Parking").Preload("Slot").Preload("User").
-			Where("user_id = ?", filter.UserID).
-			Or("parking_id = ?", filter.ParkingID).
-			Or("status = ?", filter.Status).
-			Limit(filter.Limit).
-			Offset((filter.Page - 1) * filter.Limit).
-			Order(fmt.Sprintf("%s %s", filter.SortBy, filter.SortOrder)).
-			Find(&bookings).
-			Error
-		if err != nil {
-			return nil, err
+		if filter.UserID != 0 {
+			query = query.Where("user_id = ?", filter.UserID)
 		}
-		return bookings, nil
+		if filter.ParkingID != 0 {
+			query = query.Or("parking_id = ?", filter.ParkingID)
+		}
+		if filter.Status != "" {
+			query = query.Or("status = ?", filter.Status)
+		}
+		if filter.SortBy != "" {
+			query = query.Order(fmt.Sprintf("%s %s", filter.SortBy, filter.SortOrder))
+		}
+		if filter.Limit != 0 {
+			query = query.Limit(filter.Limit)
+		}
+		if filter.Page != 0 {
+			query = query.Offset((filter.Page - 1) * filter.Limit)
+		}
 	}
 
-	err := s.DB.Preload("Parking").Preload("Slot").Preload("User").Find(&bookings).Error
+	err := query.Find(&bookings).Error
 	if err != nil {
 		return nil, err
 	}

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/agilistikmal/parkingo-core/internal/app/controllers"
+	"github.com/agilistikmal/parkingo-core/internal/app/jobs"
 	"github.com/agilistikmal/parkingo-core/internal/app/middlewares"
 	"github.com/gofiber/fiber/v2"
 )
@@ -13,9 +14,10 @@ type Route struct {
 	UserController    *controllers.UserController
 	ParkingController *controllers.ParkingController
 	BookingController *controllers.BookingController
+	BookingJob        *jobs.BookingJob
 }
 
-func NewRoute(fiberApp *fiber.App, authMiddleware *middlewares.AuthMiddleware, authController *controllers.AuthController, userController *controllers.UserController, parkingController *controllers.ParkingController, bookingController *controllers.BookingController) *Route {
+func NewRoute(fiberApp *fiber.App, authMiddleware *middlewares.AuthMiddleware, authController *controllers.AuthController, userController *controllers.UserController, parkingController *controllers.ParkingController, bookingController *controllers.BookingController, bookingJob *jobs.BookingJob) *Route {
 	return &Route{
 		FiberApp:          fiberApp,
 		AuthMiddleware:    authMiddleware,
@@ -23,6 +25,7 @@ func NewRoute(fiberApp *fiber.App, authMiddleware *middlewares.AuthMiddleware, a
 		UserController:    userController,
 		ParkingController: parkingController,
 		BookingController: bookingController,
+		BookingJob:        bookingJob,
 	}
 }
 
