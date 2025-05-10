@@ -4,28 +4,44 @@ import (
 	"github.com/agilistikmal/parkingo-core/internal/app/controllers"
 	"github.com/agilistikmal/parkingo-core/internal/app/jobs"
 	"github.com/agilistikmal/parkingo-core/internal/app/middlewares"
+	"github.com/agilistikmal/parkingo-core/internal/app/queues"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/websocket/v2"
 )
 
 type Route struct {
-	FiberApp          *fiber.App
-	AuthMiddleware    *middlewares.AuthMiddleware
-	AuthController    *controllers.AuthController
-	UserController    *controllers.UserController
-	ParkingController *controllers.ParkingController
-	BookingController *controllers.BookingController
-	BookingJob        *jobs.BookingJob
+	FiberApp            *fiber.App
+	AuthMiddleware      *middlewares.AuthMiddleware
+	AuthController      *controllers.AuthController
+	UserController      *controllers.UserController
+	ParkingController   *controllers.ParkingController
+	BookingController   *controllers.BookingController
+	WebSocketController *controllers.WebSocketController
+	BookingJob          *jobs.BookingJob
+	ScannerMQTT         *queues.ScannerMQTT
 }
 
-func NewRoute(fiberApp *fiber.App, authMiddleware *middlewares.AuthMiddleware, authController *controllers.AuthController, userController *controllers.UserController, parkingController *controllers.ParkingController, bookingController *controllers.BookingController, bookingJob *jobs.BookingJob) *Route {
+func NewRoute(
+	fiberApp *fiber.App,
+	authMiddleware *middlewares.AuthMiddleware,
+	authController *controllers.AuthController,
+	userController *controllers.UserController,
+	parkingController *controllers.ParkingController,
+	bookingController *controllers.BookingController,
+	webSocketController *controllers.WebSocketController,
+	bookingJob *jobs.BookingJob,
+	scannerMQTT *queues.ScannerMQTT,
+) *Route {
 	return &Route{
-		FiberApp:          fiberApp,
-		AuthMiddleware:    authMiddleware,
-		AuthController:    authController,
-		UserController:    userController,
-		ParkingController: parkingController,
-		BookingController: bookingController,
-		BookingJob:        bookingJob,
+		FiberApp:            fiberApp,
+		AuthMiddleware:      authMiddleware,
+		AuthController:      authController,
+		UserController:      userController,
+		ParkingController:   parkingController,
+		BookingController:   bookingController,
+		WebSocketController: webSocketController,
+		BookingJob:          bookingJob,
+		ScannerMQTT:         scannerMQTT,
 	}
 }
 
@@ -64,4 +80,25 @@ func (r *Route) RegisterRoutes() {
 	bookingRoutes.Post("/callback/payment", r.BookingController.PaymentCallback)
 	bookingRoutes.Patch("/:id", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.UpdateBooking)
 	bookingRoutes.Delete("/:id", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.DeleteBooking)
+
+	// ESP devices routes - for admin to monitor devices
+	deviceRoutes := v1.Group("/devices")
+	deviceRoutes.Get("/", r.AuthMiddleware.VerifyAuthencitated, r.AuthMiddleware.VerifyAdminAccess, r.WebSocketController.GetAllDevices)
+	deviceRoutes.Get("/:esp_hmac", r.AuthMiddleware.VerifyAuthencitated, r.AuthMiddleware.VerifyAdminAccess, r.WebSocketController.GetDeviceImage)
+
+	// WebSocket routes
+	r.FiberApp.Use("/ws", func(c *fiber.Ctx) error {
+		// IsWebSocketUpgrade returns true if the client
+		// requested upgrade to the WebSocket protocol
+		if websocket.IsWebSocketUpgrade(c) {
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
+
+	// ESP MAC-based device stream WebSocket
+	r.FiberApp.Get("/ws/device", r.WebSocketController.HandleDeviceStream, websocket.New(r.WebSocketController.HandleWebSocketConnection))
+
+	// All devices stream WebSocket (admin only)
+	r.FiberApp.Get("/ws/devices/all", r.WebSocketController.HandleAllDevicesStream, websocket.New(r.WebSocketController.HandleWebSocketConnection))
 }

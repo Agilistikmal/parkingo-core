@@ -25,19 +25,18 @@ type Parking struct {
 }
 
 type ParkingSlot struct {
-	ID         int            `json:"id"`
-	ParkingID  int            `json:"parking_id"`
-	Parking    *Parking       `gorm:"foreignKey:parking_id;references:ID" json:"parking,omitempty"`
-	Name       string         `json:"name"`
-	Status     string         `json:"status"`
-	Fee        float64        `json:"fee"`
-	Row        int            `json:"row"`
-	Col        int            `json:"col"`
-	ESPHmac    string         `json:"esp_hmac"`
-	PreviewURL string         `json:"preview_url"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
-	DeletedAt  gorm.DeletedAt `json:"deleted_at"`
+	ID        int            `json:"id"`
+	ParkingID int            `json:"parking_id"`
+	Parking   *Parking       `gorm:"foreignKey:parking_id;references:ID" json:"parking,omitempty"`
+	Name      string         `json:"name"`
+	Status    string         `json:"status"`
+	Fee       float64        `json:"fee"`
+	Row       int            `json:"row"`
+	Col       int            `json:"col"`
+	ESPHmac   string         `json:"esp_hmac"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at"`
 }
 
 type CreateParkingRequest struct {
@@ -71,11 +70,16 @@ type CreateParkingSlotRequest struct {
 }
 
 type UpdateParkingSlotRequest struct {
-	Name       string  `json:"name" validate:"omitempty,min=1,max=8"`
-	Status     string  `json:"status" validate:"omitempty,oneof=AVAILABLE BOOKED OCCUPIED"`
-	Fee        float64 `json:"fee" validate:"omitempty,min=0"`
-	Row        int     `json:"row" validate:"omitempty"`
-	Col        int     `json:"col" validate:"omitempty"`
-	ESPHmac    string  `json:"esp_hmac" validate:"omitempty"`
-	PreviewURL string  `json:"preview_url" validate:"omitempty,url"`
+	Name    string  `json:"name" validate:"omitempty,min=1,max=8"`
+	Status  string  `json:"status" validate:"omitempty,oneof=AVAILABLE BOOKED OCCUPIED"`
+	Fee     float64 `json:"fee" validate:"omitempty,min=0"`
+	Row     int     `json:"row" validate:"omitempty"`
+	Col     int     `json:"col" validate:"omitempty"`
+	ESPHmac string  `json:"esp_hmac" validate:"omitempty"`
+}
+
+type ParkingImage struct {
+	ESPHmac   string `json:"esp_hmac"`
+	ImageData string `json:"image_data"`
+	Timestamp int64  `json:"timestamp"`
 }

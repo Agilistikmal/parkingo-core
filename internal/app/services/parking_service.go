@@ -263,9 +263,6 @@ func (s *ParkingService) UpdateParkingSlot(id int, req *models.UpdateParkingSlot
 	if req.ESPHmac != "" {
 		slot.ESPHmac = req.ESPHmac
 	}
-	if req.PreviewURL != "" {
-		slot.PreviewURL = req.PreviewURL
-	}
 
 	err = s.DB.Save(&slot).Error
 	if err != nil {
