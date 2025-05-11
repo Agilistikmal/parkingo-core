@@ -173,8 +173,8 @@ func (r *Route) RegisterRoutes() {
 	}))
 
 	// ESP MAC-based device stream WebSocket
-	r.FiberApp.Get("/ws/device", r.WebSocketController.HandleDeviceStream, websocket.New(r.WebSocketController.HandleWebSocketConnection))
+	r.FiberApp.Get("/ws/device", r.WebSocketController.HandleDeviceStream, r.AuthMiddleware.VerifyWebSocketAuth, r.AuthMiddleware.VerifyAdminAccess, websocket.New(r.WebSocketController.HandleWebSocketConnection))
 
-	// All devices stream WebSocket (admin only)
-	r.FiberApp.Get("/ws/devices/all", r.AuthMiddleware.VerifyAuthencitated, r.AuthMiddleware.VerifyAdminAccess, r.WebSocketController.HandleAllDevicesStream, websocket.New(r.WebSocketController.HandleWebSocketConnection))
+	// All devices stream WebSocket (admin only) - with token query param support
+	r.FiberApp.Get("/ws/devices/all", r.WebSocketController.HandleAllDevicesStream, r.AuthMiddleware.VerifyWebSocketAuth, r.AuthMiddleware.VerifyAdminAccess, websocket.New(r.WebSocketController.HandleWebSocketConnection))
 }

@@ -30,6 +30,14 @@ func (c *WebSocketController) HandleDeviceStream(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Missing esp_hmac query parameter")
 	}
 
+	// Get token from query parameter if available
+	token := ctx.Query("token")
+	if token != "" {
+		// Store token in locals for authentication middleware
+		ctx.Locals("query_token", token)
+		logrus.Infof("WebSocket connection with token query parameter (length: %d)", len(token))
+	}
+
 	// Log headers for debugging
 	logrus.Infof("WebSocket connection headers for device %s: %+v", espHmac, ctx.GetReqHeaders())
 
@@ -53,6 +61,14 @@ func (c *WebSocketController) HandleDeviceStream(ctx *fiber.Ctx) error {
 func (c *WebSocketController) HandleAllDevicesStream(ctx *fiber.Ctx) error {
 	// Log headers for debugging
 	logrus.Infof("WebSocket connection headers for all devices: %+v", ctx.GetReqHeaders())
+
+	// Get token from query parameter
+	token := ctx.Query("token")
+	if token != "" {
+		// Store token in locals for authentication middleware
+		ctx.Locals("query_token", token)
+		logrus.Infof("WebSocket connection with token query parameter (length: %d)", len(token))
+	}
 
 	// Ensure the connection is upgraded to WebSocket
 	if !websocket.IsWebSocketUpgrade(ctx) {
