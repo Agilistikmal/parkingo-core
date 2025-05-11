@@ -106,13 +106,56 @@ func (c *WebSocketController) HandleWebSocketConnection(conn *websocket.Conn) {
 	// Create a channel to signal when the connection is closed
 	done := make(chan struct{})
 
+	// Create a flag to track whether cleanup has been performed
+	cleanupDone := false
+
+	// Define a cleanup function to avoid duplicate closures
+	cleanup := func() {
+		if cleanupDone {
+			return // Already cleaned up
+		}
+		cleanupDone = true
+
+		if mode == "specific" {
+			espHmac, _ := conn.Locals("esp_hmac").(string)
+			logrus.Infof("Unregistering WebSocket client for ESP MAC: %s (was connected for %v)",
+				espHmac, time.Since(connectedAt))
+			c.ScannerMQTT.UnregisterClient(espHmac, sendChan)
+		} else if mode == "all" {
+			logrus.Infof("Unregistering WebSocket client for ALL devices (was connected for %v)",
+				time.Since(connectedAt))
+			c.ScannerMQTT.UnregisterClient("", sendChan) // Empty ESP MAC means "all devices"
+		}
+
+		// Close the done channel first
+		select {
+		case <-done:
+			// Already closed
+		default:
+			close(done)
+		}
+
+		// Then close the send channel
+		select {
+		case _, ok := <-sendChan:
+			if ok {
+				close(sendChan)
+			}
+		default:
+			close(sendChan)
+		}
+
+		// Finally close the websocket connection
+		conn.Close()
+	}
+
 	var espHmac string
 	if mode == "specific" {
 		// Handle specific device connection
 		espHmac, ok = conn.Locals("esp_hmac").(string)
 		if !ok {
 			logrus.Error("Failed to get ESP MAC from context")
-			conn.Close()
+			cleanup()
 			return
 		}
 
@@ -133,6 +176,8 @@ func (c *WebSocketController) HandleWebSocketConnection(conn *websocket.Conn) {
 
 		if err := conn.WriteMessage(websocket.TextMessage, pingData); err != nil {
 			logrus.Errorf("Error sending initial ping: %v", err)
+			cleanup()
+			return
 		} else {
 			logrus.Info("Sent initial ping message to confirm WebSocket connection is working")
 		}
@@ -152,19 +197,16 @@ func (c *WebSocketController) HandleWebSocketConnection(conn *websocket.Conn) {
 		// Send a test broadcast after 5 seconds to verify channel is working
 		go func() {
 			time.Sleep(5 * time.Second)
-			c.ScannerMQTT.BroadcastTestMessage(espHmac, true)
-			logrus.Infof("Triggered test broadcast for specific device: %s", espHmac)
+			// Check if the connection is still active before sending test message
+			select {
+			case <-done:
+				return // Connection already closed
+			default:
+				c.ScannerMQTT.BroadcastTestMessage(espHmac, true)
+				logrus.Infof("Triggered test broadcast for specific device: %s", espHmac)
+			}
 		}()
 
-		// Clean up when the connection is closed
-		defer func() {
-			logrus.Infof("Unregistering WebSocket client for ESP MAC: %s (was connected for %v)",
-				espHmac, time.Since(connectedAt))
-			c.ScannerMQTT.UnregisterClient(espHmac, sendChan)
-			close(sendChan)
-			close(done)
-			conn.Close()
-		}()
 	} else if mode == "all" {
 		// Handle "all devices" connection
 		logrus.Info("Registering WebSocket client for ALL devices")
@@ -184,6 +226,8 @@ func (c *WebSocketController) HandleWebSocketConnection(conn *websocket.Conn) {
 
 		if err := conn.WriteMessage(websocket.TextMessage, pingData); err != nil {
 			logrus.Errorf("Error sending initial ping: %v", err)
+			cleanup()
+			return
 		} else {
 			logrus.Info("Sent initial ping message to confirm WebSocket connection is working")
 		}
@@ -203,24 +247,24 @@ func (c *WebSocketController) HandleWebSocketConnection(conn *websocket.Conn) {
 		// Send a test broadcast after 5 seconds to verify channel is working
 		go func() {
 			time.Sleep(5 * time.Second)
-			c.ScannerMQTT.BroadcastTestMessage("TEST-ESP-ALL", true)
-			logrus.Info("Triggered test broadcast for all devices")
+			// Check if the connection is still active before sending test message
+			select {
+			case <-done:
+				return // Connection already closed
+			default:
+				c.ScannerMQTT.BroadcastTestMessage("TEST-ESP-ALL", true)
+				logrus.Info("Triggered test broadcast for all devices")
+			}
 		}()
 
-		// Clean up when the connection is closed
-		defer func() {
-			logrus.Infof("Unregistering WebSocket client for ALL devices (was connected for %v)",
-				time.Since(connectedAt))
-			c.ScannerMQTT.UnregisterClient("", sendChan) // Empty ESP MAC means "all devices"
-			close(sendChan)
-			close(done)
-			conn.Close()
-		}()
 	} else {
 		logrus.Errorf("Unknown WebSocket connection mode: %s", mode)
-		conn.Close()
+		cleanup()
 		return
 	}
+
+	// Ensure cleanup is performed when the function returns
+	defer cleanup()
 
 	// Set up a ticker for periodic pings to keep connection alive
 	pingTicker := time.NewTicker(30 * time.Second)
@@ -234,6 +278,12 @@ func (c *WebSocketController) HandleWebSocketConnection(conn *websocket.Conn) {
 	// Start a goroutine to listen for messages to send to the client
 	msgCounter := 0
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logrus.Errorf("Recovered from panic in sender goroutine: %v", r)
+			}
+		}()
+
 		for {
 			select {
 			case data, ok := <-sendChan:
@@ -248,7 +298,7 @@ func (c *WebSocketController) HandleWebSocketConnection(conn *websocket.Conn) {
 
 				if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
 					logrus.Errorf("Error writing to WebSocket: %v", err)
-					// Signal that we should stop
+					// Signal that we should stop but don't close channels here
 					select {
 					case <-done:
 						// Already closed
@@ -260,6 +310,7 @@ func (c *WebSocketController) HandleWebSocketConnection(conn *websocket.Conn) {
 
 				logrus.Infof("Successfully sent message #%d over WebSocket", msgCounter)
 			case <-done:
+				logrus.Info("Done channel signaled, stopping WebSocket sender goroutine")
 				return
 			case <-pingTicker.C:
 				// Send a ping to keep the connection alive
@@ -278,12 +329,12 @@ func (c *WebSocketController) HandleWebSocketConnection(conn *websocket.Conn) {
 
 				if err := conn.WriteMessage(websocket.TextMessage, pingData); err != nil {
 					logrus.Errorf("Error sending keep-alive ping: %v", err)
+					// Don't close channels here, just return
 					return
 				}
 				logrus.Debug("Sent keep-alive ping message")
 			case <-refreshTicker.C:
 				// Periodically resend current data to ensure client has latest images
-				// but don't send if the last message was very recent
 				now := time.Now().UnixMilli()
 
 				if mode == "specific" && espHmac != "" {
@@ -338,7 +389,7 @@ func (c *WebSocketController) HandleWebSocketConnection(conn *websocket.Conn) {
 		messageType, msg, err := conn.ReadMessage()
 		if err != nil {
 			logrus.Infof("WebSocket connection closed: %v", err)
-			// Signal the sender goroutine to stop
+			// Signal the sender goroutine to stop but don't close channels here
 			select {
 			case <-done:
 				// Already closed
