@@ -282,7 +282,7 @@ func (s *BookingService) DeleteBooking(id int) error {
 	return nil
 }
 
-func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*models.Booking, error) {
+func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*models.ValidateBookingResponse, error) {
 	err := s.Validate.Struct(req)
 	if err != nil {
 		return nil, err
@@ -300,13 +300,26 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 		return nil, err
 	}
 
-	// Check if plate number is valid booking, and not expired
-	// If not found, ignore it
-	var validBooking *models.Booking
-	err = s.DB.Where("slot_id = ? AND plate_number = ? AND status = 'PAID' AND end_at > ?", parkingSlot.ID, req.PlateNumber, pkg.GetCurrentTime()).First(&validBooking).Error
+	now := pkg.GetCurrentTime()
+
+	// Get booking by slot id where now between start_at and end_at
+	var booking *models.Booking
+	err = s.DB.Where("slot_id = ? AND start_at <= ? AND end_at >= ?", parkingSlot.ID, now, now).First(&booking).Error
 	if err != nil {
 		return nil, nil
 	}
 
-	return validBooking, nil
+	// Check percentage similarity of plate number
+	similarity := pkg.CalculateSimilarity(booking.PlateNumber, req.PlateNumber)
+	threshold := 0.8
+
+	validateBookingResponse := &models.ValidateBookingResponse{
+		BookingID:          booking.ID,
+		RequestPlateNumber: req.PlateNumber,
+		BookingPlateNumber: booking.PlateNumber,
+		Similarity:         similarity,
+		IsValid:            similarity >= threshold,
+	}
+
+	return validateBookingResponse, nil
 }

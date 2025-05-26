@@ -51,6 +51,14 @@ type ValidateBookingRequest struct {
 	PlateNumber string `json:"plate_number" validate:"required,min=2,max=16"`
 }
 
+type ValidateBookingResponse struct {
+	BookingID          int     `json:"booking_id"`
+	RequestPlateNumber string  `json:"request_plate_number"`
+	BookingPlateNumber string  `json:"booking_plate_number"`
+	Similarity         float64 `json:"similarity"`
+	IsValid            bool    `json:"is_valid"`
+}
+
 type BookingFilter struct {
 	UserID    int    `json:"user_id"`
 	ParkingID int    `json:"parking_id"`
