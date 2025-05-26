@@ -184,3 +184,21 @@ func (c *BookingController) PaymentCallback(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(nil)
 }
+
+func (c *BookingController) ValidateBooking(ctx *fiber.Ctx) error {
+	var req *models.ValidateBookingRequest
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+		})
+	}
+
+	booking, err := c.BookingService.ValidateBooking(req)
+	if err != nil {
+		return pkg.HandlerError(ctx, err)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": booking,
+	})
+}

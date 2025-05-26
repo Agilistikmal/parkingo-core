@@ -84,6 +84,7 @@ func (r *Route) RegisterRoutes() {
 	bookingRoutes.Post("/callback/payment", r.BookingController.PaymentCallback)
 	bookingRoutes.Patch("/:id", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.UpdateBooking)
 	bookingRoutes.Delete("/:id", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.DeleteBooking)
+	bookingRoutes.Post("/validate", r.BookingController.ValidateBooking)
 
 	// ESP devices routes - for admin to monitor devices
 	deviceRoutes := v1.Group("/devices")

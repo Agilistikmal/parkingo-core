@@ -281,3 +281,32 @@ func (s *BookingService) DeleteBooking(id int) error {
 
 	return nil
 }
+
+func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*models.Booking, error) {
+	err := s.Validate.Struct(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var parking *models.Parking
+	err = s.DB.Where("slug = ?", req.ParkingSlug).First(&parking).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var parkingSlot *models.ParkingSlot
+	err = s.DB.Where("parking_id = ? AND name = ?", parking.ID, req.Slot).First(&parkingSlot).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if plate number is valid booking, and not expired
+	// If not found, ignore it
+	var validBooking *models.Booking
+	err = s.DB.Where("slot_id = ? AND plate_number = ? AND status = 'PAID' AND end_at > ?", parkingSlot.ID, req.PlateNumber, pkg.GetCurrentTime()).First(&validBooking).Error
+	if err != nil {
+		return nil, nil
+	}
+
+	return validBooking, nil
+}

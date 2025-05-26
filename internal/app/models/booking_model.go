@@ -45,6 +45,12 @@ type UpdateBookingRequest struct {
 	Status      string    `json:"status" validate:"omitempty,oneof=UNPAID PAID CANCELLED EXPIRED COMPLETED"`
 }
 
+type ValidateBookingRequest struct {
+	ParkingSlug string `json:"parking_slug" validate:"required"`
+	Slot        string `json:"slot" validate:"required"`
+	PlateNumber string `json:"plate_number" validate:"required,min=2,max=16"`
+}
+
 type BookingFilter struct {
 	UserID    int    `json:"user_id"`
 	ParkingID int    `json:"parking_id"`
