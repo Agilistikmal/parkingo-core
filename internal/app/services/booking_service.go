@@ -291,13 +291,13 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 	var parking *models.Parking
 	err = s.DB.Where("slug = ?", req.ParkingSlug).First(&parking).Error
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parking: %v", err)
 	}
 
 	var parkingSlot *models.ParkingSlot
 	err = s.DB.Where("parking_id = ? AND name = ?", parking.ID, req.Slot).First(&parkingSlot).Error
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parking slot: %v", err)
 	}
 
 	now := pkg.GetCurrentTime()
