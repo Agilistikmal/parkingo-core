@@ -161,7 +161,10 @@ func (s *ParkingService) UpdateParking(id int, req *models.UpdateParkingRequest)
 	if req.Slug != "" {
 		var existingParking models.Parking
 		err = s.DB.First(&existingParking, "slug = ?", req.Slug).Error
-		if err == nil {
+		if err != nil {
+			return nil, err
+		}
+		if existingParking.ID != parking.ID {
 			return nil, errors.New("slug already exists")
 		}
 		parking.Slug = req.Slug
