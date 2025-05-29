@@ -304,17 +304,19 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 
 	// Get booking by slot id where now between start_at and end_at
 	var booking *models.Booking
-	err = s.DB.Where("slot_id = ? AND start_at <= ? AND end_at >= ?", parkingSlot.ID, now, now).First(&booking).Error
+	err = s.DB.Where("slot_id = ? AND status = ?", parkingSlot.ID, "PAID").First(&booking).Error
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	// Check percentage similarity of plate number
 	similarity := pkg.CalculateSimilarity(booking.PlateNumber, req.PlateNumber)
-	threshold := 0.8
+	threshold := 0.5
 
 	validateBookingResponse := &models.ValidateBookingResponse{
 		BookingID:          booking.ID,
+		Booking:            booking,
+		RequestTime:        &now,
 		RequestPlateNumber: req.PlateNumber,
 		BookingPlateNumber: booking.PlateNumber,
 		Similarity:         similarity,

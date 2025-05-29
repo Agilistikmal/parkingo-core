@@ -52,11 +52,13 @@ type ValidateBookingRequest struct {
 }
 
 type ValidateBookingResponse struct {
-	BookingID          int     `json:"booking_id"`
-	RequestPlateNumber string  `json:"request_plate_number"`
-	BookingPlateNumber string  `json:"booking_plate_number"`
-	Similarity         float64 `json:"similarity"`
-	IsValid            bool    `json:"is_valid"`
+	BookingID          int        `json:"booking_id"`
+	Booking            *Booking   `json:"booking"`
+	RequestTime        *time.Time `json:"request_time"`
+	RequestPlateNumber string     `json:"request_plate_number"`
+	BookingPlateNumber string     `json:"booking_plate_number"`
+	Similarity         float64    `json:"similarity"`
+	IsValid            bool       `json:"is_valid"`
 }
 
 type BookingFilter struct {

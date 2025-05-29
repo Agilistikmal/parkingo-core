@@ -10,7 +10,6 @@ import (
 	"github.com/agilistikmal/parkingo-core/internal/app/controllers"
 	"github.com/agilistikmal/parkingo-core/internal/app/jobs"
 	"github.com/agilistikmal/parkingo-core/internal/app/middlewares"
-	"github.com/agilistikmal/parkingo-core/internal/app/queues"
 	"github.com/agilistikmal/parkingo-core/internal/app/routes"
 	"github.com/agilistikmal/parkingo-core/internal/app/services"
 	"github.com/agilistikmal/parkingo-core/internal/infrastructure/database"
@@ -37,10 +36,7 @@ func InjectRoutes() *routes.Route {
 	mailService := services.NewMailService()
 	bookingService := services.NewBookingService(db, validate, apiClient, mailService)
 	bookingController := controllers.NewBookingController(bookingService, parkingService, userService)
-	s3Service := services.NewS3Service()
-	scannerMQTT := queues.NewScannerMQTT(s3Service)
-	webSocketController := controllers.NewWebSocketController(scannerMQTT)
 	bookingJob := jobs.NewBookingJob(bookingService, parkingService)
-	route := routes.NewRoute(app, authMiddleware, authController, userController, parkingController, bookingController, webSocketController, bookingJob, scannerMQTT)
+	route := routes.NewRoute(app, authMiddleware, authController, userController, parkingController, bookingController, bookingJob)
 	return route
 }
