@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/agilistikmal/parkingo-core/internal/app/models"
 	"github.com/agilistikmal/parkingo-core/internal/app/pkg"
@@ -324,4 +325,33 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 	}
 
 	return validateBookingResponse, nil
+}
+
+func (s *BookingService) Checkout(reference string) (*models.Booking, error) {
+	var booking *models.Booking
+	err := s.DB.Where("payment_reference = ?", reference).First(&booking).Error
+	if err != nil {
+		return nil, fmt.Errorf("Booking with reference %s not found", reference)
+	}
+
+	disallowedStatus := []string{"UNPAID", "CANCELED"}
+	if slices.Contains(disallowedStatus, booking.Status) {
+		return booking, fmt.Errorf("Booking with reference %s (%s) is not allowed to be checked out", booking.PaymentReference, booking.Status)
+	}
+
+	if booking.Status == "EXPIRED" {
+		return booking, fmt.Errorf("Booking with reference %s is expired", booking.PaymentReference)
+	}
+
+	if booking.Status == "COMPLETED" {
+		return booking, fmt.Errorf("Booking with reference %s is already completed", booking.PaymentReference)
+	}
+
+	booking.Status = "COMPLETED"
+	err = s.DB.Save(&booking).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return booking, nil
 }

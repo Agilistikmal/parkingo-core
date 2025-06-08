@@ -73,4 +73,5 @@ func (r *Route) RegisterRoutes() {
 	bookingRoutes.Patch("/:id", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.UpdateBooking)
 	bookingRoutes.Delete("/:id", r.AuthMiddleware.VerifyAuthencitated, r.BookingController.DeleteBooking)
 	bookingRoutes.Post("/validate", r.BookingController.ValidateBooking)
+	bookingRoutes.Post("/checkout/:reference", r.AuthMiddleware.VerifyAuthencitated, r.AuthMiddleware.VerifyAdminAccess, r.BookingController.Checkout)
 }

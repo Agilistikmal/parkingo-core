@@ -202,3 +202,21 @@ func (c *BookingController) ValidateBooking(ctx *fiber.Ctx) error {
 		"data": booking,
 	})
 }
+
+func (c *BookingController) Checkout(ctx *fiber.Ctx) error {
+	reference := ctx.Params("reference")
+	if reference == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid booking reference",
+		})
+	}
+
+	booking, err := c.BookingService.Checkout(reference)
+	if err != nil {
+		return pkg.HandlerError(ctx, err)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": booking,
+	})
+}
