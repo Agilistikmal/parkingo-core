@@ -291,13 +291,13 @@ func (s *ParkingService) DeleteParkingSlot(id int) error {
 
 func (s *ParkingService) SyncParking(id int) error {
 	var parking *models.Parking
-	err := s.DB.Preload("Slots").First(&parking, id).Error
+	err := s.DB.Session(&gorm.Session{PrepareStmt: false}).Preload("Slots").First(&parking, id).Error
 	if err != nil {
 		return err
 	}
 
 	var bookings []models.Booking
-	err = s.DB.Preload("Parking").Where("parking_id = ?", id).Find(&bookings).Error
+	err = s.DB.Session(&gorm.Session{PrepareStmt: false}).Preload("Parking").Where("parking_id = ?", id).Find(&bookings).Error
 	if err != nil {
 		return err
 	}
