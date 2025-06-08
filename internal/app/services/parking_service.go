@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/agilistikmal/parkingo-core/internal/app/models"
 	"github.com/go-playground/validator/v10"
@@ -281,6 +282,40 @@ func (s *ParkingService) DeleteParkingSlot(id int) error {
 	}
 
 	err = s.DB.Delete(&slot).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *ParkingService) SyncParking(id int) error {
+	var parking *models.Parking
+	err := s.DB.Preload("Slots").First(&parking, id).Error
+	if err != nil {
+		return err
+	}
+
+	var bookings []models.Booking
+	err = s.DB.Preload("Parking").Where("parking_id = ?", id).Find(&bookings).Error
+	if err != nil {
+		return err
+	}
+
+	// Reset parking earnings and total bookings
+	parking.TotalEarnings = 0
+	parking.AvailableEarnings = 0
+	parking.TotalBookings = 0
+
+	for _, booking := range bookings {
+		disallowedStatuses := []string{"UNPAID", "CANCELLED"}
+		if !slices.Contains(disallowedStatuses, booking.Status) {
+			parking.TotalEarnings += booking.TotalFee
+			parking.TotalBookings++
+		}
+	}
+
+	err = s.DB.Save(&parking).Error
 	if err != nil {
 		return err
 	}

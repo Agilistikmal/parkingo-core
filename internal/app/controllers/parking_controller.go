@@ -138,3 +138,21 @@ func (c *ParkingController) DeleteParking(ctx *fiber.Ctx) error {
 		"message": "Parking deleted successfully",
 	})
 }
+
+func (c *ParkingController) SyncParking(ctx *fiber.Ctx) error {
+	id, err := ctx.ParamsInt("id")
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid parking ID",
+		})
+	}
+
+	err = c.ParkingService.SyncParking(id)
+	if err != nil {
+		return pkg.HandlerError(ctx, err)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Parking synced successfully",
+	})
+}
