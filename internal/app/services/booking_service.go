@@ -208,7 +208,7 @@ func (s *BookingService) UpdateBooking(id int, req *models.UpdateBookingRequest)
 	}
 
 	parkingSlot := booking.Slot
-
+	parking := booking.Parking
 	if req.PlateNumber != "" {
 		booking.PlateNumber = req.PlateNumber
 	}
@@ -251,6 +251,17 @@ func (s *BookingService) UpdateBooking(id int, req *models.UpdateBookingRequest)
 
 	err = s.DB.Transaction(func(tx *gorm.DB) error {
 		err = tx.Save(&booking).Error
+		if err != nil {
+			return err
+		}
+
+		if booking.Status == "PAID" {
+			parking.TotalEarnings += booking.TotalFee
+			parking.TotalBookings++
+			parking.AvailableEarnings += booking.TotalFee
+		}
+
+		err = tx.Save(&parking).Error
 		if err != nil {
 			return err
 		}

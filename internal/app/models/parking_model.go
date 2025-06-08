@@ -8,20 +8,24 @@ import (
 )
 
 type Parking struct {
-	ID         int            `json:"id"`
-	AuthorID   int            `json:"author_id"`
-	Author     *User          `gorm:"foreignKey:author_id;references:ID" json:"author,omitempty"`
-	Slug       string         `json:"slug"`
-	Name       string         `json:"name"`
-	Address    string         `json:"address"`
-	DefaultFee float64        `json:"default_fee"`
-	Latitude   float64        `json:"latitude"`
-	Longitude  float64        `json:"longitude"`
-	Layout     datatypes.JSON `json:"layout" gorm:"type:jsonb"`
-	Slots      []ParkingSlot  `json:"slots" gorm:"foreignKey:parking_id;references:ID"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
-	DeletedAt  *time.Time     `json:"deleted_at"`
+	ID                int            `json:"id"`
+	AuthorID          int            `json:"author_id"`
+	Author            *User          `gorm:"foreignKey:author_id;references:ID" json:"author,omitempty"`
+	Slug              string         `json:"slug"`
+	Name              string         `json:"name"`
+	Address           string         `json:"address"`
+	DefaultFee        float64        `json:"default_fee"`
+	Latitude          float64        `json:"latitude"`
+	Longitude         float64        `json:"longitude"`
+	Layout            datatypes.JSON `json:"layout" gorm:"type:jsonb"`
+	Slots             []ParkingSlot  `json:"slots" gorm:"foreignKey:parking_id;references:ID"`
+	TotalEarnings     float64        `json:"total_earnings"`
+	TotalBookings     int            `json:"total_bookings"`
+	AvailableEarnings float64        `json:"available_earnings"`
+	WithdrawnEarnings float64        `json:"withdrawn_earnings"`
+	CreatedAt         time.Time      `json:"created_at"`
+	UpdatedAt         time.Time      `json:"updated_at"`
+	DeletedAt         *time.Time     `json:"deleted_at"`
 }
 
 type ParkingSlot struct {

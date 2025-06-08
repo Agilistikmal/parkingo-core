@@ -51,6 +51,26 @@ func (c *BookingController) GetBookings(ctx *fiber.Ctx) error {
 	})
 }
 
+func (c *BookingController) GetBookingsAdmin(ctx *fiber.Ctx) error {
+	filter := &models.BookingFilter{
+		UserID:    ctx.QueryInt("user_id", 0),
+		Page:      ctx.QueryInt("page", 1),
+		Limit:     ctx.QueryInt("limit", 10),
+		SortBy:    ctx.Query("sort_by", "created_at"),
+		SortOrder: ctx.Query("sort_order", "desc"),
+		ParkingID: ctx.QueryInt("parking_id", 0),
+	}
+
+	bookings, err := c.BookingService.GetBookings(filter)
+	if err != nil {
+		return pkg.HandlerError(ctx, err)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": bookings,
+	})
+}
+
 func (c *BookingController) GetBookingByID(ctx *fiber.Ctx) error {
 	id, err := ctx.ParamsInt("id")
 	if err != nil {
