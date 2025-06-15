@@ -24,8 +24,8 @@ func NewBookingJob(bookingService *services.BookingService, parkingService *serv
 	}
 }
 
-func (j *BookingJob) checkBookingStatus() {
-	logrus.Info("Checking booking status")
+func (j *BookingJob) checkBookingStatusPAID() {
+	logrus.Info("Checking booking status PAID")
 	bookings, err := j.BookingService.GetBookings(&models.BookingFilter{
 		Status: "PAID",
 	})
@@ -37,7 +37,8 @@ func (j *BookingJob) checkBookingStatus() {
 	logrus.Info("Found ", len(bookings), " bookings")
 
 	for _, booking := range bookings {
-		if booking.Status == "PAID" && booking.EndAt.Before(time.Now()) && booking.Status != "COMPLETED" {
+		// if booking is expired, update status to COMPLETED
+		if booking.Status == "PAID" && booking.EndAt.Before(time.Now()) {
 			logrus.Infof("Updating booking %s status to COMPLETED", booking.PaymentReference)
 			_, err = j.BookingService.UpdateBooking(booking.ID, &models.UpdateBookingRequest{
 				Status: "COMPLETED",
@@ -59,7 +60,7 @@ func (j *BookingJob) checkBookingStatus() {
 func (j *BookingJob) RunCheckBookingStatus() {
 	logrus.Info("Running check booking status")
 	c := cron.New(cron.WithLocation(j.TimeLocation))
-	_, err := c.AddFunc("*/5 * * * *", j.checkBookingStatus)
+	_, err := c.AddFunc("*/5 * * * *", j.checkBookingStatusPAID)
 	if err != nil {
 		logrus.Error("Failed to add check booking status to cron: ", err)
 		return

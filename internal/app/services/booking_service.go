@@ -340,7 +340,7 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 
 func (s *BookingService) Checkout(reference string) (*models.Booking, error) {
 	var booking *models.Booking
-	err := s.DB.Where("payment_reference = ?", reference).First(&booking).Error
+	err := s.DB.Preload("Slot").Preload("Parking").Preload("User").Where("payment_reference = ?", reference).First(&booking).Error
 	if err != nil {
 		return nil, fmt.Errorf("Booking with reference %s not found", reference)
 	}
@@ -358,8 +358,22 @@ func (s *BookingService) Checkout(reference string) (*models.Booking, error) {
 		return booking, fmt.Errorf("Booking with reference %s is already completed", booking.PaymentReference)
 	}
 
-	booking.Status = "COMPLETED"
-	err = s.DB.Save(&booking).Error
+	s.DB.Transaction(func(tx *gorm.DB) error {
+		booking.Status = "COMPLETED"
+		err = tx.Save(&booking).Error
+		if err != nil {
+			return err
+		}
+
+		parkingSlot := booking.Slot
+		parkingSlot.Status = "AVAILABLE"
+		err = tx.Save(&parkingSlot).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
