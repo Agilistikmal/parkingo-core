@@ -323,7 +323,7 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 
 	// Check percentage similarity of plate number
 	similarity := pkg.CalculateSimilarity(booking.PlateNumber, req.PlateNumber)
-	threshold := 0.5
+	threshold := 0.8
 
 	validateBookingResponse := &models.ValidateBookingResponse{
 		BookingID:          booking.ID,
