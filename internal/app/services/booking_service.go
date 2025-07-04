@@ -316,9 +316,9 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 	now := pkg.GetCurrentTime()
 	tolerance := 15 * time.Minute
 
-	// Get booking by slot id where now between start_at and end_at (with tolerance 15 minutes)
+	// Get booking by slot id where now is after start_at (with tolerance 15 minutes)
 	var booking *models.Booking
-	err = s.DB.Where("slot_id = ? AND status = ? AND start_at <= ? AND end_at >= ?", parkingSlot.ID, "PAID", now.Add(-tolerance), now.Add(tolerance)).First(&booking).Error
+	err = s.DB.Where("slot_id = ? AND status = ? AND start_at <= ?", parkingSlot.ID, "PAID", now.Add(tolerance)).First(&booking).Error
 	if err != nil {
 		return nil, err
 	}
