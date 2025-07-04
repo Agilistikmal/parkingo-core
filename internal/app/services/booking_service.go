@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/agilistikmal/parkingo-core/internal/app/models"
 	"github.com/agilistikmal/parkingo-core/internal/app/pkg"
@@ -313,10 +314,11 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 	}
 
 	now := pkg.GetCurrentTime()
+	tolerance := 15 * time.Minute
 
-	// Get booking by slot id where now between start_at and end_at
+	// Get booking by slot id where now between start_at and end_at (with tolerance 15 minutes)
 	var booking *models.Booking
-	err = s.DB.Where("slot_id = ? AND status = ? AND start_at <= ? AND end_at >= ?", parkingSlot.ID, "PAID", now, now).First(&booking).Error
+	err = s.DB.Where("slot_id = ? AND status = ? AND start_at <= ? AND end_at >= ?", parkingSlot.ID, "PAID", now.Add(-tolerance), now.Add(tolerance)).First(&booking).Error
 	if err != nil {
 		return nil, err
 	}
