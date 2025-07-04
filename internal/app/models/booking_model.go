@@ -59,6 +59,7 @@ type ValidateBookingResponse struct {
 	BookingPlateNumber string     `json:"booking_plate_number"`
 	Similarity         float64    `json:"similarity"`
 	IsValid            bool       `json:"is_valid"`
+	Reason             string     `json:"reason"`
 }
 
 type BookingFilter struct {

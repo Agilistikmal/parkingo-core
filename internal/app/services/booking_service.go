@@ -316,7 +316,7 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 
 	// Get booking by slot id where now between start_at and end_at
 	var booking *models.Booking
-	err = s.DB.Where("slot_id = ? AND status = ?", parkingSlot.ID, "PAID").First(&booking).Error
+	err = s.DB.Where("slot_id = ? AND status = ? AND start_at <= ? AND end_at >= ?", parkingSlot.ID, "PAID", now, now).First(&booking).Error
 	if err != nil {
 		return nil, err
 	}
