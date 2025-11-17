@@ -121,6 +121,21 @@ func (c *ParkingController) UpdateParking(ctx *fiber.Ctx) error {
 	})
 }
 
+func (c *ParkingController) UpdateParkingSlotStatus(ctx *fiber.Ctx) error {
+	parkingSlug := ctx.Params("slug")
+	slotName := ctx.Params("slot_name")
+	status := ctx.Params("status")
+
+	err := c.ParkingService.UpdateParkingSlotStatus(parkingSlug, slotName, status)
+	if err != nil {
+		return pkg.HandlerError(ctx, err)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Parking slot status updated successfully",
+	})
+}
+
 func (c *ParkingController) DeleteParking(ctx *fiber.Ctx) error {
 	id, err := ctx.ParamsInt("id")
 	if err != nil {

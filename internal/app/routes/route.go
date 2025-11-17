@@ -60,6 +60,7 @@ func (r *Route) RegisterRoutes() {
 	parkingRoutes.Get("/", r.ParkingController.GetParkings)
 	parkingRoutes.Get("/:id", r.ParkingController.GetParkingByID)
 	parkingRoutes.Get("/slug/:slug", r.ParkingController.GetParkingBySlug)
+	parkingRoutes.Patch("/slug/:slug/slot/:slot_name/status/:status", r.ParkingController.UpdateParkingSlotStatus)
 	parkingRoutes.Post("/", r.AuthMiddleware.VerifyAuthencitated, r.AuthMiddleware.VerifyAdminAccess, r.ParkingController.CreateParking)
 	parkingRoutes.Patch("/:id", r.AuthMiddleware.VerifyAuthencitated, r.AuthMiddleware.VerifyAdminAccess, r.ParkingController.UpdateParking)
 	parkingRoutes.Delete("/:id", r.AuthMiddleware.VerifyAuthencitated, r.AuthMiddleware.VerifyAdminAccess, r.ParkingController.DeleteParking)

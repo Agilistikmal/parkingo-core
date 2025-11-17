@@ -190,6 +190,26 @@ func (s *ParkingService) UpdateParking(id int, req *models.UpdateParkingRequest)
 	return parking, nil
 }
 
+func (s *ParkingService) UpdateParkingSlotStatus(parkingSlug string, slotName string, status string) error {
+	parking, err := s.GetParkingBySlug(parkingSlug)
+	if err != nil {
+		return err
+	}
+
+	var slot *models.ParkingSlot
+	err = s.DB.Where("parking_id = ? AND name = ?", parking.ID, slotName).First(&slot).Error
+	if err != nil {
+		return err
+	}
+
+	if status != "AVAILABLE" && status != "BOOKED" && status != "OCCUPIED" {
+		return errors.New("invalid status")
+	}
+
+	slot.Status = status
+	return s.DB.Save(&slot).Error
+}
+
 func (s *ParkingService) DeleteParking(id int) error {
 	parking, err := s.GetParkingByID(id)
 	if err != nil {
