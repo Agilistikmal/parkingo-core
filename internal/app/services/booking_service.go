@@ -301,16 +301,39 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 		return nil, err
 	}
 
+	tx := s.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	var parking *models.Parking
-	err = s.DB.Where("slug = ?", req.ParkingSlug).First(&parking).Error
+	err = tx.Where("slug = ?", req.ParkingSlug).First(&parking).Error
 	if err != nil {
+		logrus.Error("Failed to get parking: ", err)
+		tx.Rollback()
 		return nil, fmt.Errorf("parking: %v", err)
 	}
 
 	var parkingSlot *models.ParkingSlot
-	err = s.DB.Where("parking_id = ? AND name = ?", parking.ID, req.Slot).First(&parkingSlot).Error
+	err = tx.Where("parking_id = ? AND name = ?", parking.ID, req.Slot).First(&parkingSlot).Error
 	if err != nil {
+		logrus.Error("Failed to get parking slot: ", err)
+		tx.Rollback()
 		return nil, fmt.Errorf("parking slot: %v", err)
+	}
+
+	if req.PlateNumber != "" {
+		parkingSlot.Status = "OCCUPIED"
+	} else {
+		parkingSlot.Status = "AVAILABLE"
+	}
+	err = tx.Save(&parkingSlot).Error
+	if err != nil {
+		logrus.Error("Failed to update parking slot status: ", err)
+		tx.Rollback()
+		return nil, err
 	}
 
 	now := pkg.GetCurrentTime()
@@ -318,14 +341,25 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 
 	// Get booking by slot id where now is after start_at (with tolerance 15 minutes)
 	var booking *models.Booking
-	err = s.DB.Where("slot_id = ? AND status = ? AND start_at <= ?", parkingSlot.ID, "PAID", now.Add(tolerance)).First(&booking).Error
+	err = tx.Where("slot_id = ? AND status = ? AND start_at <= ?", parkingSlot.ID, "PAID", now.Add(tolerance)).First(&booking).Error
 	if err != nil {
+		logrus.Error("Failed to get booking: ", err)
+		tx.Rollback()
 		return nil, err
 	}
 
 	// Check percentage similarity of plate number
 	similarity := pkg.CalculateSimilarity(booking.PlateNumber, req.PlateNumber)
 	threshold := 0.7
+
+	isValid := similarity >= threshold
+
+	reason := ""
+	if !isValid {
+		reason = fmt.Sprintf("Valid (%.2f%%)", similarity*100)
+	} else {
+		reason = fmt.Sprintf("Invalid (%.2f%%)", similarity*100)
+	}
 
 	validateBookingResponse := &models.ValidateBookingResponse{
 		BookingID:          booking.ID,
@@ -334,7 +368,15 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 		RequestPlateNumber: req.PlateNumber,
 		BookingPlateNumber: booking.PlateNumber,
 		Similarity:         similarity,
-		IsValid:            similarity >= threshold,
+		IsValid:            isValid,
+		Reason:             reason,
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		logrus.Error("Failed to commit transaction: ", err)
+		tx.Rollback()
+		return nil, err
 	}
 
 	return validateBookingResponse, nil
@@ -345,6 +387,49 @@ func (s *BookingService) Checkout(reference string) (*models.Booking, error) {
 	err := s.DB.Preload("Slot").Preload("Parking").Preload("User").Where("payment_reference = ?", reference).First(&booking).Error
 	if err != nil {
 		return nil, fmt.Errorf("Booking with reference %s not found", reference)
+	}
+
+	disallowedStatus := []string{"UNPAID", "CANCELED"}
+	if slices.Contains(disallowedStatus, booking.Status) {
+		return booking, fmt.Errorf("Booking with reference %s (%s) is not allowed to be checked out", booking.PaymentReference, booking.Status)
+	}
+
+	if booking.Status == "EXPIRED" {
+		return booking, fmt.Errorf("Booking with reference %s is expired", booking.PaymentReference)
+	}
+
+	if booking.Status == "COMPLETED" {
+		return booking, fmt.Errorf("Booking with reference %s is already completed", booking.PaymentReference)
+	}
+
+	s.DB.Transaction(func(tx *gorm.DB) error {
+		booking.Status = "COMPLETED"
+		err = tx.Save(&booking).Error
+		if err != nil {
+			return err
+		}
+
+		parkingSlot := booking.Slot
+		parkingSlot.Status = "AVAILABLE"
+		err = tx.Save(&parkingSlot).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return booking, nil
+}
+
+func (s *BookingService) CheckoutWithPlateNumber(plateNumber string) (*models.Booking, error) {
+	var booking *models.Booking
+	err := s.DB.Preload("Slot").Preload("Parking").Preload("User").Where("plate_number = ?", plateNumber).First(&booking).Error
+	if err != nil {
+		return nil, fmt.Errorf("Booking with plate number %s not found", plateNumber)
 	}
 
 	disallowedStatus := []string{"UNPAID", "CANCELED"}

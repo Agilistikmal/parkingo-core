@@ -240,3 +240,21 @@ func (c *BookingController) Checkout(ctx *fiber.Ctx) error {
 		"data": booking,
 	})
 }
+
+func (c *BookingController) CheckoutWithPlateNumber(ctx *fiber.Ctx) error {
+	plateNumber := ctx.Params("plate_number")
+	if plateNumber == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid plate number",
+		})
+	}
+
+	booking, err := c.BookingService.CheckoutWithPlateNumber(plateNumber)
+	if err != nil {
+		return pkg.HandlerError(ctx, err)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": booking,
+	})
+}
