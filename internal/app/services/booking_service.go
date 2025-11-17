@@ -343,6 +343,25 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 	var booking *models.Booking
 	err = tx.Where("slot_id = ? AND status = ? AND start_at <= ?", parkingSlot.ID, "PAID", now.Add(tolerance)).First(&booking).Error
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			err := tx.Commit().Error
+			if err != nil {
+				logrus.Error("Failed to commit transaction: ", err)
+				tx.Rollback()
+				return nil, err
+			}
+			validateBookingResponse := &models.ValidateBookingResponse{
+				BookingID:          0,
+				Booking:            nil,
+				RequestTime:        &now,
+				RequestPlateNumber: req.PlateNumber,
+				BookingPlateNumber: "",
+				Similarity:         0,
+				IsValid:            true,
+				Reason:             "Guest",
+			}
+			return validateBookingResponse, nil
+		}
 		logrus.Error("Failed to get booking: ", err)
 		tx.Rollback()
 		return nil, err
