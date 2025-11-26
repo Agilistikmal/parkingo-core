@@ -17,6 +17,7 @@ type Parking struct {
 	DefaultFee        float64        `json:"default_fee"`
 	Latitude          float64        `json:"latitude"`
 	Longitude         float64        `json:"longitude"`
+	Distance          float64        `json:"distance" gorm:"-"`
 	Layout            datatypes.JSON `json:"layout" gorm:"type:jsonb"`
 	Slots             []ParkingSlot  `json:"slots" gorm:"foreignKey:parking_id;references:ID"`
 	TotalEarnings     float64        `json:"total_earnings"`

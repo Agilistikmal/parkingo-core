@@ -33,13 +33,28 @@ func (s *ParkingService) GetParkings(filter *models.ParkingFilter) ([]models.Par
 			query = query.Where("LOWER(name) LIKE ?", "%"+strings.ToLower(filter.Search)+"%")
 		}
 	}
-	if filter.SortBy != "" && filter.SortOrder != "" {
-		query = query.Order(fmt.Sprintf("%s %s", filter.SortBy, filter.SortOrder))
-	}
 
 	if filter.UserLatitude != 0 && filter.UserLongitude != 0 && filter.Radius != 0 {
-		query = query.Where("latitude BETWEEN ? AND ?", filter.UserLatitude-filter.Radius, filter.UserLatitude+filter.Radius).
-			Where("longitude BETWEEN ? AND ?", filter.UserLongitude-filter.Radius, filter.UserLongitude+filter.Radius)
+		haversineQuery := fmt.Sprintf(`(
+			6371 * acos(
+					cos(radians(%f)) * cos(radians(latitude)) * cos(radians(longitude) - radians(%f)) + 
+					sin(radians(%f)) * sin(radians(latitude))
+			)
+	)`, filter.UserLatitude, filter.UserLongitude, filter.UserLatitude)
+
+		query = query.Select("*, " + haversineQuery + " AS distance")
+
+		if filter.Radius > 0 {
+			query = query.Where(haversineQuery+" <= ?", filter.Radius)
+		}
+
+		if filter.SortBy == "" {
+			query = query.Order("distance ASC")
+		}
+	}
+
+	if filter.SortBy != "" && filter.SortOrder != "" {
+		query = query.Order(fmt.Sprintf("%s %s", filter.SortBy, filter.SortOrder))
 	}
 
 	err := query.Find(&parkings).Error
