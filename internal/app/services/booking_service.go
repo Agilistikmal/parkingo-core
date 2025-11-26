@@ -10,6 +10,7 @@ import (
 	"github.com/agilistikmal/parkingo-core/internal/app/pkg"
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/xendit/xendit-go/v6"
 	"github.com/xendit/xendit-go/v6/invoice"
 	"gorm.io/gorm"
@@ -119,9 +120,13 @@ func (s *BookingService) CreateBooking(userID int, req *models.CreateBookingRequ
 		return nil, err
 	}
 
+	minHours := 3
+	if viper.GetString("environment") == "dev" {
+		minHours = 0
+	}
 	totalHours := int(req.EndAt.Sub(req.StartAt).Hours())
-	if totalHours < 3 {
-		return nil, fmt.Errorf("minimum booking time is 3 hours")
+	if totalHours < minHours {
+		return nil, fmt.Errorf("minimum booking time is %d hours", minHours)
 	}
 
 	totalFee := float64(totalHours) * parkingSlot.Fee
@@ -374,8 +379,21 @@ func (s *BookingService) ValidateBooking(req *models.ValidateBookingRequest) (*m
 	isValid := similarity >= threshold
 
 	reason := ""
-	if !isValid {
-		reason = fmt.Sprintf("Valid (%.2f%%)", similarity*100)
+	if isValid {
+		// Check overtime
+		if booking.EndAt.Before(now.Add(15 * time.Minute)) {
+			reason = fmt.Sprintf("Valid (%.2f%%) - Overtime", similarity*100)
+			if !booking.IsNotifyOvertimeSent {
+				booking.IsNotifyOvertimeSent = true
+				err = s.DB.Save(&booking).Error
+				if err != nil {
+					return nil, err
+				}
+				go s.MailService.SendMail(booking.User.Email, fmt.Sprintf("Booking Overtime %s", booking.PaymentReference), fmt.Sprintf("Your booking is overtime. You might charged extra fee for this booking. Booking invoice and detail: https://parkingo.agil.zip/b/%s", booking.PaymentReference))
+			}
+		} else {
+			reason = fmt.Sprintf("Valid (%.2f%%)", similarity*100)
+		}
 	} else {
 		reason = fmt.Sprintf("Invalid (%.2f%%)", similarity*100)
 	}

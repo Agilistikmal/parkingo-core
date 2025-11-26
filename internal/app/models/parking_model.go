@@ -87,3 +87,12 @@ type ParkingImage struct {
 	ImageData string `json:"image_data"`
 	Timestamp int64  `json:"timestamp"`
 }
+
+type ParkingFilter struct {
+	Search        string  `json:"search"`
+	SortBy        string  `json:"sort_by"`
+	SortOrder     string  `json:"sort_order"`
+	UserLatitude  float64 `json:"user_latitude"`
+	UserLongitude float64 `json:"user_longitude"`
+	Radius        float64 `json:"radius"`
+}

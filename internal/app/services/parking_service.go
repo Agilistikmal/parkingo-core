@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/agilistikmal/parkingo-core/internal/app/models"
 	"github.com/go-playground/validator/v10"
@@ -23,9 +24,25 @@ func NewParkingService(db *gorm.DB, validate *validator.Validate) *ParkingServic
 	}
 }
 
-func (s *ParkingService) GetParkings() ([]models.Parking, error) {
+func (s *ParkingService) GetParkings(filter *models.ParkingFilter) ([]models.Parking, error) {
 	var parkings []models.Parking
-	err := s.DB.Preload("Author").Preload("Slots").Find(&parkings).Error
+	query := s.DB.Preload("Author").Preload("Slots")
+
+	if filter != nil {
+		if filter.Search != "" {
+			query = query.Where("LOWER(name) LIKE ?", "%"+strings.ToLower(filter.Search)+"%")
+		}
+	}
+	if filter.SortBy != "" && filter.SortOrder != "" {
+		query = query.Order(fmt.Sprintf("%s %s", filter.SortBy, filter.SortOrder))
+	}
+
+	if filter.UserLatitude != 0 && filter.UserLongitude != 0 && filter.Radius != 0 {
+		query = query.Where("latitude BETWEEN ? AND ?", filter.UserLatitude-filter.Radius, filter.UserLatitude+filter.Radius).
+			Where("longitude BETWEEN ? AND ?", filter.UserLongitude-filter.Radius, filter.UserLongitude+filter.Radius)
+	}
+
+	err := query.Find(&parkings).Error
 	if err != nil {
 		return nil, err
 	}

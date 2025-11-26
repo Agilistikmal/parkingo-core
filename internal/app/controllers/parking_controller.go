@@ -18,7 +18,16 @@ func NewParkingController(parkingService *services.ParkingService) *ParkingContr
 }
 
 func (c *ParkingController) GetParkings(ctx *fiber.Ctx) error {
-	parkings, err := c.ParkingService.GetParkings()
+	filter := &models.ParkingFilter{
+		SortBy:        ctx.Query("sort_by", "created_at"),
+		SortOrder:     ctx.Query("sort_order", "desc"),
+		UserLatitude:  ctx.QueryFloat("user_latitude", 0),
+		UserLongitude: ctx.QueryFloat("user_longitude", 0),
+		Radius:        ctx.QueryFloat("radius", 10),
+		Search:        ctx.Query("search", ""),
+	}
+
+	parkings, err := c.ParkingService.GetParkings(filter)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to get parkings",

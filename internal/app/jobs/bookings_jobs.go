@@ -58,7 +58,7 @@ func (j *BookingJob) checkBookingStatusPAID() {
 }
 
 func (j *BookingJob) RunCheckBookingStatus() {
-	logrus.Info("Running check booking status")
+	logrus.Info("Running check booking status every 5 minutes")
 	c := cron.New(cron.WithLocation(j.TimeLocation))
 	_, err := c.AddFunc("*/5 * * * *", j.checkBookingStatusPAID)
 	if err != nil {
